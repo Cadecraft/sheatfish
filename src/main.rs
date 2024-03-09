@@ -19,12 +19,45 @@ TODOS:
     - Zoom features
 */
 
+/// Read inputted character
+fn read_char() -> char {
+    if let Ok(crossterm::event::Event::Key(crossterm::event::KeyEvent {
+        code: crossterm::event::KeyCode::Char(c),
+        kind: crossterm::event::KeyEventKind::Press,
+        modifiers: _,
+        state: _,
+    })) = crossterm::event::read() {
+        return c;
+    }
+    // Could not read the event
+    '!'
+}
+
+/// Wait for and read an inputted key code
+fn read_key() -> crossterm::event::KeyCode {
+    // Read the event
+    match crossterm::event::read() {
+        // Only return a code on the Ok key event
+        Ok(crossterm::event::Event::Key(k)) => {
+            // Only return if the key is pressed
+            if k.kind == crossterm::event::KeyEventKind::Press {
+                k.code
+            } else {
+                crossterm::event::KeyCode::Null
+            }
+        }
+        _ => {
+            crossterm::event::KeyCode::Null
+        }
+    }
+}
+
 /// Main function
 fn main() {
     // Initialize REM, introductions
     let rem = remdata::RemData::new(
-        "0.1.0",
-        "2024/03/08",
+        "0.1.1",
+        "2024/03/09",
         true
     );
     println!("SHEATFISH by Cadecraft");
@@ -47,43 +80,51 @@ fn main() {
     data.load_vector(&vec![vec!["".to_string(); 10]; 10]);
 
     // Start the command loop cycle
+    command_cycle(&mut config, &mut data);
+}
+
+/// Command cycle function
+fn command_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::SheetData) {
     loop {
         // Render
         render::render(&config, &data);
-        // Get and take action on input
-        //let input = crossterm::input::input(); // todo: crossterm
-        let mut uin = String::new();
-        io::stdin()
-            .read_line(&mut uin)
-            .expect("ERROR: failed to read line");
-        uin = uin.trim().to_string();
-        match uin.as_str() {
-            "quit" => {
-                // Quit
-                break;
-            },
-            "w" => {
-                // Up
-                data.move_selected((-1, 0));
-            },
-            "a" => {
-                // Left
-                data.move_selected((0, -1));
-            },
-            "s" => {
-                // Down
-                data.move_selected((1, 0));
+
+        // Input loop until a rerender
+        let mut inputword: String = String::new();
+        loop {
+            let mut endinput: bool = true;
+            // Get and take action on input
+            let ink = read_key(); // Read from Crossterm
+            match ink {
+                crossterm::event::KeyCode::Esc => {
+                    // Quit out of the command cycle
+                    return;
+                }
+                crossterm::event::KeyCode::Up => data.move_selected_coords((-1, 0)),
+                crossterm::event::KeyCode::Left => data.move_selected_coords((0, -1)),
+                crossterm::event::KeyCode::Down => data.move_selected_coords((1, 0)),
+                crossterm::event::KeyCode::Right => data.move_selected_coords((0, 1)),
+                crossterm::event::KeyCode::Enter => {
+                    // Enter the data, if it exists, and move down
+                    if inputword.chars().count() > 0 {
+                        data.set_selected_cell_value(inputword.clone());
+                    }
+                    data.move_selected_coords((1, 0));
+                }
+                crossterm::event::KeyCode::Char(c) => {
+                    // Char c has been typed
+                    inputword.push(c);
+                    print!("{}", c);
+                    endinput = false;
+                }
+                _ => {
+                    // Null or irrelevant code: do nothing
+                    endinput = false;
+                }
             }
-            "d" => {
-                // Right
-                data.move_selected((0, 1));
-            },
-            _ if uin.starts_with(":") => {
-                // Set the cell
-                data.set_selected_cell(uin.chars().skip(1).collect());
-            },
-            _ => {
-                // nothing
+            // End input if necessary (triggers ending stuff and rerender)
+            if endinput {
+                break;
             }
         }
     }

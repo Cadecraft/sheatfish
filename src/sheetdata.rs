@@ -45,8 +45,8 @@ impl SheetData {
         self.file_path = "generated_file".to_string();
         self.sheet = newsheet.clone();
     }
-    /// Move the selection
-    pub fn move_selected(&mut self, delta: (i32, i32)) {
+    /// Move the coordinates of the selected cell
+    pub fn move_selected_coords(&mut self, delta: (i32, i32)) {
         if self.selected.is_none() {
             return;
         }
@@ -57,34 +57,35 @@ impl SheetData {
         }
         let new0: usize = (curr0 + delta.0).try_into().unwrap();
         let new1: usize = (curr1 + delta.1).try_into().unwrap();
-        self.set_selected((new0, new1));
+        self.set_selected_coords((new0, new1));
     }
-    /// Set the selection
-    pub fn set_selected(&mut self, coords: (usize, usize)) {
+    /// Set the coordinates of the selected cell
+    pub fn set_selected_coords(&mut self, coords: (usize, usize)) {
         if !self.in_bounds(coords) {
             return;
         }
         self.selected = Some(coords);
     }
-    /// Set a specific cell
-    pub fn set_cell(&mut self, coords: (usize, usize), newval: String) {
-        if !self.in_bounds(coords) {
-            return;
-        }
-        self.sheet[coords.0][coords.1] = newval;
-    }
-    /// Get the selected cell
-    pub fn selected_cell(&self) -> Option<&str> {
+    /// Get the value of the selected cell
+    pub fn selected_cell_value(&self) -> Option<&str> {
         if self.selected.is_none() {
             return None;
         }
         self.cell(self.selected.unwrap())
     }
-    /// Set the selected cell
-    pub fn set_selected_cell(&mut self, newval: String) {
+    /// Set the value of a cell
+    pub fn set_cell_value(&mut self, coords: (usize, usize), newval: String) {
+        if !self.in_bounds(coords) {
+            return;
+        }
+        self.sheet[coords.0][coords.1] = newval;
+        println!("dbg: set the cell val");
+    }
+    /// Set the value of the selected cell
+    pub fn set_selected_cell_value(&mut self, newval: String) {
         if self.selected.is_none() {
             return;
         }
-        self.set_cell(self.selected.unwrap(), newval);
+        self.set_cell_value(self.selected.unwrap(), newval);
     }
 }

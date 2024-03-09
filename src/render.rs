@@ -47,8 +47,8 @@ pub fn render(config: &configdata::ConfigData, data: &sheetdata::SheetData) {
     }
     println!("----");
     // Render selected cell info
-    if data.selected.is_some() && data.selected_cell().is_some() {
-        println!("({}, {}): {}", data.selected.unwrap().0, data.selected.unwrap().1, data.selected_cell().unwrap());
+    if data.selected.is_some() && data.selected_cell_value().is_some() {
+        println!("({}, {}): {}", data.selected.unwrap().0, data.selected.unwrap().1, data.selected_cell_value().unwrap());
     } else {
         println!("no cell selected");
     }
