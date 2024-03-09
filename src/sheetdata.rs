@@ -79,7 +79,6 @@ impl SheetData {
             return;
         }
         self.sheet[coords.0][coords.1] = newval;
-        println!("dbg: set the cell val");
     }
     /// Set the value of the selected cell
     pub fn set_selected_cell_value(&mut self, newval: String) {

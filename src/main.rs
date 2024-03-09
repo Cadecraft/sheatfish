@@ -104,9 +104,20 @@ fn command_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::Shee
                 crossterm::event::KeyCode::Left => data.move_selected_coords((0, -1)),
                 crossterm::event::KeyCode::Down => data.move_selected_coords((1, 0)),
                 crossterm::event::KeyCode::Right => data.move_selected_coords((0, 1)),
+                // todo: handle backspace
+                crossterm::event::KeyCode::Backspace => {
+                    // Delete the last char in inputword if it exists; otherwise, clear the cell
+                    if !inputword.is_empty() {
+                        inputword.pop();
+                        print!("<");
+                        endinput = false;
+                    } else {
+                        data.set_selected_cell_value(String::new()); // Cleared; rerender
+                    }
+                }
                 crossterm::event::KeyCode::Enter => {
-                    // Enter the data, if it exists, and move down
-                    if inputword.chars().count() > 0 {
+                    // Enter the data if it exists, then move down
+                    if !inputword.is_empty() {
                         data.set_selected_cell_value(inputword.clone());
                     }
                     data.move_selected_coords((1, 0));
@@ -114,7 +125,8 @@ fn command_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::Shee
                 crossterm::event::KeyCode::Char(c) => {
                     // Char c has been typed
                     inputword.push(c);
-                    print!("{}", c);
+                    // todo: print properly for displaying
+                    print!("{}", c); 
                     endinput = false;
                 }
                 _ => {
