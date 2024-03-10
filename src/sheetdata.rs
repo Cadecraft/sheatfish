@@ -1,8 +1,11 @@
+use std::fs;
+
 /// Stores the data for the sheet
 pub struct SheetData {
     pub file_path: String,
     sheet: Vec<Vec<String>>,
-    pub selected: Option<(usize, usize)> // (y, x)
+    pub selected: Option<(usize, usize)>, // (y, x)
+    pub unsaved: bool
 }
 
 impl SheetData {
@@ -10,7 +13,8 @@ impl SheetData {
         SheetData {
             file_path: "no_file".to_string(),
             sheet: Vec::new(),
-            selected: Some((0, 0))
+            selected: Some((0, 0)),
+            unsaved: true
         }
     }
     /// Get the sheet bounds (y len, x len)
@@ -36,18 +40,64 @@ impl SheetData {
     pub fn load_file(&mut self, path: &str) -> bool {
         self.file_path = path.to_string();
         // Get the file
-        // Update the vec
+        let read_res = fs::read_to_string(path);
+        if read_res.is_err() {
+            return false;
+        }
+        let res = read_res.unwrap().replace("\r\n", "\n").replace("\r", "\n");
+        // Update the vec by parsing res
+        // todo: comma/quote handling
         self.sheet.clear();
+        let mut bound_width: usize = 0;
+        for resline in res.split('\n') {
+            self.sheet.push(Vec::new());
+            let sheetn = self.sheet.len();
+            let mut n = 0;
+            for resword in resline.split(',') {
+                self.sheet[sheetn - 1].push(resword.trim().to_string());
+                n += 1;
+            }
+            if bound_width == 0 {
+                bound_width = n;
+            }
+            // Fill in extra lines
+            while n < bound_width {
+                self.sheet[sheetn - 1].push(String::new());
+                n += 1;
+            }
+        }
+        // So far, the file is "saved" (may be modified by loading, but saving should do nothing currently)
+        self.unsaved = false;
+        self.selected = None;
+        // Success
         true
     }
     /// Load a vector literal
     pub fn load_vector(&mut self, newsheet: &Vec<Vec<String>>) {
         self.file_path = "generated_file".to_string();
         self.sheet = newsheet.clone();
+        // So far, the file is unsaved
+        self.unsaved = true;
+        self.selected = None;
+    }
+    /// Save to a file, return whether successful
+    pub fn save_file(&mut self, path: &str) -> bool {
+        if path == self.file_path && !self.unsaved {
+            // Same file, so do not save
+            return false;
+        }
+        self.file_path = path.to_string();
+        // Open the file
+        // todo: impl
+        // Now the file has been saved
+        self.unsaved = false;
+        true
     }
     /// Move the coordinates of the selected cell
     pub fn move_selected_coords(&mut self, delta: (i32, i32)) {
         if self.selected.is_none() {
+            // Default to the start if possible
+            self.set_selected_coords((0, 0));
             return;
         }
         let curr0: i32 = self.selected.unwrap().0.try_into().unwrap();
@@ -79,6 +129,7 @@ impl SheetData {
             return;
         }
         self.sheet[coords.0][coords.1] = newval;
+        self.unsaved = true; // Was modified
     }
     /// Set the value of the selected cell
     pub fn set_selected_cell_value(&mut self, newval: String) {

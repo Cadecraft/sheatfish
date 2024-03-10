@@ -4,9 +4,6 @@ pub mod sheetdata;
 pub mod configdata;
 pub mod render;
 
-use std::io;
-//use crossterm::input;
-
 /*
 TODOS:
     - Git ignore editorconfig
@@ -69,7 +66,7 @@ fn main() {
     let mut config = configdata::ConfigData::new();
     let mut data = sheetdata::SheetData::new();
 
-    // Dbg: load a testing vector
+    // Dbg: load a testing vector/file
     /*data.load_vector(&vec![
         vec!["xasdfasdfsfs".to_string(), "yaa".to_string(), "z".to_string(), "more".to_string()],
         vec!["u".to_string(), "v".to_string(), "w".to_string(), "even".to_string(), "mas".to_string()],
@@ -79,12 +76,52 @@ fn main() {
     // Load a blank default vector
     data.load_vector(&vec![vec!["".to_string(); 10]; 10]);
 
-    // Start the command loop cycle
-    command_cycle(&mut config, &mut data);
+    // Start the command cycle
+    loop {
+        println!("Enter a command (see README.md for commands):");
+
+        // todo: command class
+        // todo: branch logic using match
+        let mut uin = String::new();
+        std::io::stdin().read_line(&mut uin).expect("Failed to read line");
+        let command: Vec<&str> = uin.trim().split(' ').collect();
+        if command.len() == 2 {
+            if command[0].trim() == "open" {
+                // Load the file
+                let load_success = data.load_file(command[1].trim());
+                if !load_success {
+                    println!("Error opening file.");
+                } else {
+                    // Start the control cycle
+                    control_cycle(&mut config, &mut data);
+                }
+            } else {
+                println!("Unknown command.");
+            }
+        } else if command.len() == 1 {
+            if command[0].trim() == "quit" {
+                // Quit
+                break;
+            } else if command[0].trim() == "back" {
+                // Back to the file
+                // Start control cycle
+                control_cycle(&mut config, &mut data);
+            } else if command[0].trim() == "new" {
+                // New file: load a blank default vector
+                data.load_vector(&vec![vec!["".to_string(); 10]; 10]);
+                // Start control cycle
+                control_cycle(&mut config, &mut data);
+            } else {
+                println!("Unknown command.");
+            }
+        } else {
+            println!("Unknown command.");
+        }
+    }
 }
 
 /// Command cycle function
-fn command_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::SheetData) {
+fn control_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::SheetData) {
     loop {
         // Render
         render::render(&config, &data);
@@ -104,7 +141,6 @@ fn command_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::Shee
                 crossterm::event::KeyCode::Left => data.move_selected_coords((0, -1)),
                 crossterm::event::KeyCode::Down => data.move_selected_coords((1, 0)),
                 crossterm::event::KeyCode::Right => data.move_selected_coords((0, 1)),
-                // todo: handle backspace
                 crossterm::event::KeyCode::Backspace => {
                     // Delete the last char in inputword if it exists; otherwise, clear the cell
                     if !inputword.is_empty() {

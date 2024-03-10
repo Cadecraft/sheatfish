@@ -16,9 +16,10 @@ fn fmt_string_padding(instr: &str, maxwidth: usize) -> String {
 
 /// Render the sheet
 pub fn render(config: &configdata::ConfigData, data: &sheetdata::SheetData) {
-    println!();
+    for _i in 0..20 { println!(); } // todo: better clear
+    //crossterm::terminal::Clear(crossterm::terminal::ClearType::Purge);
     // Render sheet title and info
-    println!("{} ({} x {})", data.file_path, data.bounds().0, data.bounds().1);
+    println!("{}{} ({} x {})", if data.unsaved { "*" } else { "" }, data.file_path, data.bounds().0, data.bounds().1);
     println!("----");
     // Render column titles
     print!(" {} ", fmt_string_padding("", config.maxcellwidth));
@@ -28,6 +29,10 @@ pub fn render(config: &configdata::ConfigData, data: &sheetdata::SheetData) {
     }
     println!();
     // Render all sheet rows with cells
+    // todo: colors
+    //crossterm::style::SetBackgroundColor(crossterm::style::Color::Cyan);
+    //crossterm::style::Print("y");
+    //crossterm::style::style("among").with(crossterm::style::Color::Cyan);
     for row in 0..data.bounds().0 {
         // Render row title
         // TODO: letters or numbers?
