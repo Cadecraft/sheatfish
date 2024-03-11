@@ -15,16 +15,21 @@ An incredibly simple terminal-based spreadsheet editor written in Rust!
 - `quit` -
 Quit
 
+- `back` -
+Exit the command prompt (return to a file)
+
 - `new` - Create a new blank file
 
 - `open {file path}` -
 Open a .csv file
 
-- `save {file path}` - Save to a .csv file
+- `save {file path}` -
+Save to a .csv file
 
 ## Controls (in files)
 
-- `[esc]` - Exit a file (return to command prompt)
+- `[esc]` -
+Exit a file (return to command prompt)
 
 - `{row #}{column letter}` -
 Navigate to a specific cell

@@ -45,7 +45,7 @@ impl SheetData {
             return false;
         }
         let res = read_res.unwrap().replace("\r\n", "\n").replace("\r", "\n");
-        // Update the vec by parsing res
+        // Update the sheet by parsing res
         // todo: comma/quote handling
         self.sheet.clear();
         let mut bound_width: usize = 0;
@@ -84,11 +84,29 @@ impl SheetData {
     pub fn save_file(&mut self, path: &str) -> bool {
         if path == self.file_path && !self.unsaved {
             // Same file, so do not save
-            return false;
+            return false; // todo: better error message ("already saved")
         }
         self.file_path = path.to_string();
+        // Create res by iterating over the sheet
+        let mut res: String = String::new();
+        for row in &self.sheet {
+            let mut first_line = true;
+            for col in row {
+                if first_line {
+                    first_line = false;
+                } else {
+                    res.push(',');
+                    res.push(' ');
+                }
+                res.push_str(col);
+            }
+            res.push('\n');
+        }
         // Open the file
-        // todo: impl
+        let write_res = fs::write(path, res);
+        if write_res.is_err() {
+            return false;
+        }
         // Now the file has been saved
         self.unsaved = false;
         true

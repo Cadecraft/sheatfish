@@ -6,6 +6,7 @@ pub mod render;
 
 /*
 TODOS:
+    - Pan/zoom (only display a 16x16 area by default)
     - Git ignore editorconfig
     - All commands and features
     - File loading
@@ -74,10 +75,11 @@ fn main() {
     ]);*/
 
     // Load a blank default vector
-    data.load_vector(&vec![vec!["".to_string(); 10]; 10]);
+    data.load_vector(&vec![vec!["".to_string(); 16]; 16]);
 
     // Start the command cycle
     loop {
+        // todo: better cycle appearance
         println!("Enter a command (see README.md for commands):");
 
         // todo: command class
@@ -85,7 +87,60 @@ fn main() {
         let mut uin = String::new();
         std::io::stdin().read_line(&mut uin).expect("Failed to read line");
         let command: Vec<&str> = uin.trim().split(' ').collect();
-        if command.len() == 2 {
+        match command.len() {
+            1 => {
+                match command[0].trim() {
+                    "quit" => {
+                        // Quit
+                        break;
+                    },
+                    "back" => {
+                        // Back to the file
+                        // Start control cycle
+                        control_cycle(&mut config, &mut data);
+                    },
+                    "new" => {
+                        // New file: load a blank default vector
+                        data.load_vector(&vec![vec!["".to_string(); 10]; 10]);
+                        // Start control cycle
+                        control_cycle(&mut config, &mut data);
+                    },
+                    _ => {
+                        println!("Unknown command.");
+                    }
+                }
+            },
+            2 => {
+                match command[0].trim() {
+                    "open" => {
+                        // Load the file
+                        let load_success = data.load_file(command[1].trim());
+                        if !load_success {
+                            println!("Error opening file.");
+                        } else {
+                            // Start the control cycle
+                            control_cycle(&mut config, &mut data);
+                        }
+                    },
+                    "save" => {
+                        // Save the file
+                        let save_success = data.save_file(command[1].trim());
+                        if !save_success {
+                            println!("Error saving file.");
+                        } else {
+                            println!("Saved file.");
+                        }
+                    },
+                    _ => {
+                        println!("Unknown command.");
+                    }
+                }
+            },
+            _ => {
+                println!("Unknown command.");
+            }
+        }
+        /*if command.len() == 2 {
             if command[0].trim() == "open" {
                 // Load the file
                 let load_success = data.load_file(command[1].trim());
@@ -116,7 +171,7 @@ fn main() {
             }
         } else {
             println!("Unknown command.");
-        }
+        }*/
     }
 }
 
