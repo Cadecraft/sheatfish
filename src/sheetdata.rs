@@ -50,6 +50,9 @@ impl SheetData {
         self.sheet.clear();
         let mut bound_width: usize = 0;
         for resline in res.split('\n') {
+            if resline.trim().is_empty() {
+                continue;
+            } 
             self.sheet.push(Vec::new());
             let sheetn = self.sheet.len();
             let mut n = 0;

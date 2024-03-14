@@ -94,8 +94,8 @@ fn main() {
                         // Quit
                         break;
                     },
-                    "back" => {
-                        // Back to the file
+                    "edit" => {
+                        // Back to editing the file
                         // Start control cycle
                         control_cycle(&mut config, &mut data);
                     },
@@ -106,7 +106,7 @@ fn main() {
                         control_cycle(&mut config, &mut data);
                     },
                     _ => {
-                        println!("Unknown command.");
+                        println!("Unknown command."); // todo: refactor unknown
                     }
                 }
             },
@@ -136,42 +136,23 @@ fn main() {
                     }
                 }
             },
+            3 => {
+                match command[0].trim() {
+                    "nav" => {
+                        // Navigate to a cell (command[2], command[1])
+                        data.set_selected_coords((command[2].parse().unwrap_or(0), command[1].parse().unwrap_or(0)));
+                        // Start the control cycle
+                        control_cycle(&mut config, &mut data);
+                    },
+                    _ => {
+                        println!("Unknown command.");
+                    }
+                }
+            }
             _ => {
                 println!("Unknown command.");
             }
         }
-        /*if command.len() == 2 {
-            if command[0].trim() == "open" {
-                // Load the file
-                let load_success = data.load_file(command[1].trim());
-                if !load_success {
-                    println!("Error opening file.");
-                } else {
-                    // Start the control cycle
-                    control_cycle(&mut config, &mut data);
-                }
-            } else {
-                println!("Unknown command.");
-            }
-        } else if command.len() == 1 {
-            if command[0].trim() == "quit" {
-                // Quit
-                break;
-            } else if command[0].trim() == "back" {
-                // Back to the file
-                // Start control cycle
-                control_cycle(&mut config, &mut data);
-            } else if command[0].trim() == "new" {
-                // New file: load a blank default vector
-                data.load_vector(&vec![vec!["".to_string(); 10]; 10]);
-                // Start control cycle
-                control_cycle(&mut config, &mut data);
-            } else {
-                println!("Unknown command.");
-            }
-        } else {
-            println!("Unknown command.");
-        }*/
     }
 }
 

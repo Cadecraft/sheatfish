@@ -6,33 +6,40 @@ An incredibly simple terminal-based spreadsheet editor written in Rust!
 
 :warning: Currently supports .csv files only.
 
-:warning: Currently a work in progress; not yet usable
+:warning: Currently a work in progress; not yet fully usable
 
 ## Commands (in command prompt)
 
 :warning: Currently a work in progress; these commands do not all exist yet
 
+System
+
 - `quit` -
 Quit
 
-- `back` -
-Exit the command prompt (return to a file)
+- `edit` -
+Exit the command prompt (return to editing a file)
 
 - `new` - Create a new blank file
 
-- `open {file path}` -
+- `open {filename or path}` -
 Open a .csv file
 
-- `save {file path}` -
+- `save {filename or path}` -
 Save to a .csv file
 
-## Controls (in files)
+- `config {key} {value}` -
+Set a config key (see below)
+
+Editing
+
+- `nav {column #} {row #}` -
+Navigate to the cell at a coordinate
+
+## Keybinds (while editing)
 
 - `[esc]` -
 Exit a file (return to command prompt)
-
-- `{row #}{column letter}` -
-Navigate to a specific cell
 
 - `[arrow keys]` -
 Navigate up/left/down/right one cell
@@ -41,9 +48,6 @@ Navigate up/left/down/right one cell
 Overwrite the current cell with a value
 
 - `[enter]` - Commit the current value
-
-- `config {key} {value}` -
-Set a config key (see below)
 
 ## Config
 
