@@ -115,19 +115,14 @@ impl SheetData {
         true
     }
     /// Move the coordinates of the selected cell
-    pub fn move_selected_coords(&mut self, delta: (i32, i32)) {
-        if self.selected.is_none() {
+    pub fn move_selected_coords(&mut self, delta: (isize, isize)) {
+        let Some(selected) = self.selected else {
             // Default to the start if possible
             self.set_selected_coords((0, 0));
             return;
-        }
-        let curr0: i32 = self.selected.unwrap().0.try_into().unwrap();
-        let curr1: i32 = self.selected.unwrap().1.try_into().unwrap();
-        if curr0 + delta.0 < 0 || curr1 + delta.1 < 0 {
-            return;
-        }
-        let new0: usize = (curr0 + delta.0).try_into().unwrap();
-        let new1: usize = (curr1 + delta.1).try_into().unwrap();
+        };
+        let new0: usize = (selected.0 as isize + delta.0).try_into().unwrap_or(0);
+        let new1: usize = (selected.1 as isize + delta.1).try_into().unwrap_or(0);
         self.set_selected_coords((new0, new1));
     }
     /// Set the coordinates of the selected cell
