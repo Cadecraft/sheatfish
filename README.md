@@ -31,6 +31,9 @@ Save to a .csv file
 - `config {key} {value}` -
 Set a config key (see below)
 
+- `config` -
+See all config keys (see below)
+
 Editing
 
 - `nav {column #} {row #}` -

@@ -144,6 +144,10 @@ fn main() {
                         // Start the control cycle
                         control_cycle(&mut config, &mut data);
                     },
+                    "config" => {
+                        // Set a config to a value
+                        config.set_value(command[1], command[2].parse().unwrap_or(2));
+                    }
                     _ => {
                         println!("Unknown command.");
                     }
@@ -160,7 +164,7 @@ fn main() {
 fn control_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::SheetData) {
     loop {
         // Render
-        render::render(&config, &data);
+        render::render(config, &data);
 
         // Input loop until a rerender
         let mut inputword: String = String::new();

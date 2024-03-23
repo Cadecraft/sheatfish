@@ -1,6 +1,8 @@
+use std::collections::HashMap;
+
 /// Stores the config data
 pub struct ConfigData {
-    pub maxcellwidth: usize
+    datamap: HashMap<String, i32>
 }
 
 impl ConfigData {
@@ -8,7 +10,19 @@ impl ConfigData {
     pub fn new() -> ConfigData {
         // Default config
         ConfigData {
-            maxcellwidth: 5
+            datamap: HashMap::from([
+                ("maxcellwidth".to_string(), 5)
+            ])
         }
+    }
+
+    // Get the config value of a string key
+    pub fn get_value(&self, key: &str) -> Option<i32> {
+        self.datamap.get(key).copied()
+    }
+
+    // Set the config value of a string key
+    pub fn set_value(&mut self, key: &str, val: i32) {
+        self.datamap.insert(key.to_string(), val);
     }
 }
