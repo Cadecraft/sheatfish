@@ -45,10 +45,15 @@ Exit a file (return to command prompt)
 Navigate up/left/down/right one cell
 
 - `{literal value}` -
-Overwrite the current cell with a value
+Overwrite the current cell with this new value by pressing enter
 
-- `[enter]` - Commit the current value
+- `[enter]` -
+Commit the new value to the current cell, or edit the current cell's value if there is no new value
+
+- `[backspace]` -
+Delete the last character of the new value, or clear the current cell if there is no new value
 
 ## Config
 
-- `maxcellwidth` - max inner width of a cell (integer from 1..=50, default 5)
+- `maxcellwidth` -
+Max inner width of a cell (integer from 1..=50, default 5)

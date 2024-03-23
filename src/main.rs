@@ -18,7 +18,7 @@ TODOS:
 */
 
 /// Read inputted character
-fn read_char() -> char {
+fn _read_char() -> char {
     if let Ok(crossterm::event::Event::Key(crossterm::event::KeyEvent {
         code: crossterm::event::KeyCode::Char(c),
         kind: crossterm::event::KeyEventKind::Press,
@@ -188,11 +188,28 @@ fn control_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::Shee
                     }
                 }
                 crossterm::event::KeyCode::Enter => {
+                    // todo: change command:
+                    // todo: if no inputword, edit curr cell data (set inputword)
                     // Enter the data if it exists, then move down
                     if !inputword.is_empty() {
+                        // Already typed a word: enter it and move down
                         data.set_selected_cell_value(inputword.clone());
+                        data.move_selected_coords((1, 0));
+                    } else {
+                        // Did not type a word yet
+                        if let Some(cellval) = data.selected_cell_value() {
+                            if cellval.is_empty() {
+                                // Empty: move down
+                                data.move_selected_coords((1, 0));
+                            } else {
+                                // Not empty: start editing
+                                inputword = cellval.to_string();
+                                endinput = false;
+                            }
+                        } else {
+                            // No cell: do nothing
+                        }
                     }
-                    data.move_selected_coords((1, 0));
                 }
                 crossterm::event::KeyCode::Char(c) => {
                     // Char c has been typed
