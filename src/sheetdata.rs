@@ -11,7 +11,7 @@ pub struct SheetData {
 impl SheetData {
     pub fn new() -> SheetData {
         SheetData {
-            file_path: "no_file".to_string(),
+            file_path: "new_file".to_string(),
             sheet: Vec::new(),
             selected: Some((0, 0)),
             unsaved: true

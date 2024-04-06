@@ -90,7 +90,7 @@ fn main() {
         match command.len() {
             1 => {
                 match command[0].trim() {
-                    "quit" => {
+                    "quit" | "q" => {
                         // Quit
                         break;
                     },
@@ -105,6 +105,15 @@ fn main() {
                         // Start control cycle
                         control_cycle(&mut config, &mut data);
                     },
+                    "save" | "w" => {
+                        // Save the file to the same path, if possible
+                        let save_success = data.save_file(&data.file_path.clone());
+                        if !save_success {
+                            println!("Error saving file.");
+                        } else {
+                            println!("Saved file.");
+                        }
+                    }
                     _ => {
                         println!("Unknown command."); // todo: refactor unknown
                     }
@@ -112,7 +121,7 @@ fn main() {
             },
             2 => {
                 match command[0].trim() {
-                    "open" => {
+                    "open" | "e" => {
                         // Load the file
                         let load_success = data.load_file(command[1].trim());
                         if !load_success {
@@ -122,7 +131,7 @@ fn main() {
                             control_cycle(&mut config, &mut data);
                         }
                     },
-                    "save" => {
+                    "save" | "w" => {
                         // Save the file
                         let save_success = data.save_file(command[1].trim());
                         if !save_success {
@@ -168,63 +177,101 @@ fn control_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::Shee
 
         // Input loop until a rerender
         let mut inputword: String = String::new();
+        let mut insertmode: bool = false;
         loop {
             let mut endinput: bool = true;
             // Get and take action on input
             let ink = read_key(); // Read from Crossterm
-            match ink {
-                crossterm::event::KeyCode::Esc => {
-                    // Quit out of the command cycle
-                    return;
-                }
-                crossterm::event::KeyCode::Up => data.move_selected_coords((-1, 0)),
-                crossterm::event::KeyCode::Left => data.move_selected_coords((0, -1)),
-                crossterm::event::KeyCode::Down => data.move_selected_coords((1, 0)),
-                crossterm::event::KeyCode::Right => data.move_selected_coords((0, 1)),
-                crossterm::event::KeyCode::Backspace => {
-                    // Delete the last char in inputword if it exists; otherwise, clear the cell
-                    if !inputword.is_empty() {
-                        inputword.pop();
-                        print!("<");
-                        endinput = false;
-                    } else {
-                        data.set_selected_cell_value(String::new()); // Cleared; rerender
+            if config.get_value("vimmode").unwrap_or(0) == 0 {
+                // NORMAL MODE KEYBINDS
+                match ink {
+                    crossterm::event::KeyCode::Esc => {
+                        // Quit out of the command cycle
+                        return;
                     }
-                }
-                crossterm::event::KeyCode::Enter => {
-                    // todo: change command:
-                    // todo: if no inputword, edit curr cell data (set inputword)
-                    // Enter the data if it exists, then move down
-                    if !inputword.is_empty() {
-                        // Already typed a word: enter it and move down
-                        data.set_selected_cell_value(inputword.clone());
-                        data.move_selected_coords((1, 0));
-                    } else {
-                        // Did not type a word yet
-                        if let Some(cellval) = data.selected_cell_value() {
-                            if cellval.is_empty() {
-                                // Empty: move down
-                                data.move_selected_coords((1, 0));
-                            } else {
-                                // Not empty: start editing
-                                inputword = cellval.to_string();
-                                endinput = false;
-                            }
+                    crossterm::event::KeyCode::Up => data.move_selected_coords((-1, 0)),
+                    crossterm::event::KeyCode::Left => data.move_selected_coords((0, -1)),
+                    crossterm::event::KeyCode::Down => data.move_selected_coords((1, 0)),
+                    crossterm::event::KeyCode::Right => data.move_selected_coords((0, 1)),
+                    crossterm::event::KeyCode::Backspace => {
+                        // Delete the last char in inputword if it exists; otherwise, clear the cell
+                        if !inputword.is_empty() {
+                            inputword.pop();
+                            print!("<");
+                            endinput = false;
                         } else {
-                            // No cell: do nothing
+                            data.set_selected_cell_value(String::new()); // Cleared; rerender
                         }
                     }
+                    crossterm::event::KeyCode::Enter => {
+                        // todo: change command:
+                        // todo: if no inputword, edit curr cell data (set inputword)
+                        // Enter the data if it exists, then move down
+                        if !inputword.is_empty() {
+                            // Already typed a word: enter it and move down
+                            data.set_selected_cell_value(inputword.clone());
+                            data.move_selected_coords((1, 0));
+                        } else {
+                            // Did not type a word yet
+                            if let Some(cellval) = data.selected_cell_value() {
+                                if cellval.is_empty() {
+                                    // Empty: move down
+                                    data.move_selected_coords((1, 0));
+                                } else {
+                                    // Not empty: start editing
+                                    inputword = cellval.to_string();
+                                    endinput = false;
+                                }
+                            } else {
+                                // No cell: do nothing
+                            }
+                        }
+                    }
+                    crossterm::event::KeyCode::Char(c) => {
+                        // Char c has been typed
+                        inputword.push(c);
+                        // todo: print properly for displaying
+                        print!("{}", c); 
+                        endinput = false;
+                    }
+                    _ => {
+                        // Null or irrelevant key: do nothing
+                        endinput = false;
+                    }
                 }
-                crossterm::event::KeyCode::Char(c) => {
-                    // Char c has been typed
-                    inputword.push(c);
-                    // todo: print properly for displaying
-                    print!("{}", c); 
-                    endinput = false;
-                }
-                _ => {
-                    // Null or irrelevant code: do nothing
-                    endinput = false;
+            } else {
+                // VIM MODE KEYBINDINGS
+                // TODO: impl all
+                match ink {
+                    crossterm::event::KeyCode::Esc => {
+                        // Exit insert mode, saving changes to the cell if needed
+                        // TODO: impl
+                    }
+                    crossterm::event::KeyCode::Char(c) => {
+                        // Char c has been typed
+                        if insertmode {
+                            // Insert this character
+                            inputword.push(c);
+                            // todo: print properly for displaying
+                            print!("{}", c); 
+                            endinput = false;
+                        } else {
+                            // Normal mode command?
+                            // TODO: switch based on the character c (normal mode)
+                            match c {
+                                ':' => {
+                                    // Quit out of the command cycle
+                                    return;
+                                }
+                                _ => {
+                                    // Irrelevant character: do nothing
+                                }
+                            }
+                        }
+                    }
+                    _ => {
+                        // Null or irrelevant key: do nothing
+                    }
                 }
             }
             // End input if necessary (triggers ending stuff and rerender)
