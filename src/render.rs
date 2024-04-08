@@ -33,6 +33,7 @@ pub fn render(config: &mut configdata::ConfigData, data: &sheetdata::SheetData) 
     //crossterm::style::SetBackgroundColor(crossterm::style::Color::Cyan);
     //crossterm::style::Print("y");
     //crossterm::style::style("among").with(crossterm::style::Color::Cyan);
+    // TODO: view width
     for row in 0..data.bounds().0 {
         // Render row title
         // TODO: letters or numbers?

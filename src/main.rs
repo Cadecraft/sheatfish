@@ -113,7 +113,11 @@ fn main() {
                         } else {
                             println!("Saved file.");
                         }
-                    }
+                    },
+                    "config" => {
+                        // Display all the config items
+                        println!("{}", config.display());
+                    },
                     _ => {
                         println!("Unknown command."); // todo: refactor unknown
                     }
@@ -244,9 +248,14 @@ fn control_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::Shee
                 // TODO: impl all
                 match ink {
                     crossterm::event::KeyCode::Esc => {
-                        // Exit insert mode, saving changes to the cell if needed
-                        // TODO: impl
-                    }
+                        if insertmode {
+                            // Exit insert mode, saving changes to the cell if needed
+                            data.set_selected_cell_value(inputword.clone());
+                            inputword.clear();
+                            insertmode = false;
+                            endinput = true;
+                        }
+                    },
                     crossterm::event::KeyCode::Char(c) => {
                         // Char c has been typed
                         if insertmode {
@@ -263,14 +272,45 @@ fn control_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::Shee
                                     // Quit out of the command cycle
                                     return;
                                 }
+                                'h' => data.move_selected_coords((0, -1)),
+                                'j' => data.move_selected_coords((1, 0)),
+                                'k' => data.move_selected_coords((-1, 0)),
+                                'l' => data.move_selected_coords((0, 1)),
+                                'x' => data.set_selected_cell_value(String::new()), // Cleared; rerender
+                                'i' => {
+                                    // Insert
+                                    // TODO: impl or remove
+                                },
+                                'a' => {
+                                    // Append
+                                    if let Some(cellval) = data.selected_cell_value() {
+                                        // Exists: start editing
+                                        inputword = cellval.to_string();
+                                        endinput = false;
+                                        insertmode = true;
+                                    } else {
+                                        // No cell: do nothing
+                                    }
+                                },
+                                'c' => {
+                                    // Change the cell's value
+                                    if data.selected_cell_value().is_some() {
+                                        // Exists: start editing
+                                        inputword.clear();
+                                        endinput = false;
+                                        insertmode = true;
+                                    }
+                                }
                                 _ => {
                                     // Irrelevant character: do nothing
+                                    endinput = false;
                                 }
                             }
                         }
                     }
                     _ => {
                         // Null or irrelevant key: do nothing
+                        endinput = false;
                     }
                 }
             }
