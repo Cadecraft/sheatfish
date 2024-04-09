@@ -88,6 +88,7 @@ fn main() {
         let mut uin = String::new();
         std::io::stdin().read_line(&mut uin).expect("Failed to read line");
         let command: Vec<&str> = uin.trim().split(' ').collect();
+        // TODO: ignore a : at the start of a command (vim thing)
         match command.len() {
             1 => {
                 match command[0].trim() {
