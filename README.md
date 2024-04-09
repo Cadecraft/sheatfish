@@ -65,7 +65,7 @@ Delete the last character of the new value, or clear the current cell if there i
 
 ### Vim Mode
 
-- `[:]` - Exit a file (return to command prompt)
+- `[:]` - Exit a file (return to command prompt, ex. `[:][q][enter]` -> quit)
 
 - `[h]`/`[j]`/`[k]`/`[l]` - Navigate left/down/up/right one cell
 
@@ -75,9 +75,7 @@ Delete the last character of the new value, or clear the current cell if there i
 
 - `[esc]` - Exit insert mode (go into "normal" mode)
 
-- `[c]` - Change the value of a cell
-
-- `[i]` - Insert into a cell (first character)
+- `[c]`/`[i]` - Change the value of a cell
 
 - `[a]` - Append into a cell (add characters at the end)
 
@@ -88,7 +86,13 @@ Delete the last character of the new value, or clear the current cell if there i
 ## Config
 
 - `maxcellwidth` -
-Max inner width of a cell (integer from 1..=50, default 5)
+Max inner width of a cell (integer from 1.., default 5)
+
+- `viewcellswidth` -
+Max width of cells to show on screen at once before scrolling (integer from 1.., default 10)
+
+- `viewcellsheight` -
+Max height of cells to show on screen at once before scrolling (integer from 1.., default 10)
 
 - `vimmode` -
 Set to 1 to use the Vim Mode keybinds (see above) (integer from 0..=1, default 0)

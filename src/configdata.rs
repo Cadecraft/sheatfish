@@ -4,7 +4,7 @@ use std::fs;
 /// Stores the config data
 pub struct ConfigData {
     datamap: HashMap<String, i32>,
-    savepath: String
+    savepath: String,
 }
 
 impl ConfigData {
@@ -14,7 +14,9 @@ impl ConfigData {
         let mut res = ConfigData {
             datamap: HashMap::from([
                 ("maxcellwidth".to_string(), 5),
-                ("vimmode".to_string(), 0)
+                ("vimmode".to_string(), 0),
+                ("viewcellswidth".to_string(), 10),
+                ("viewcellsheight".to_string(), 10)
             ]),
             savepath: String::from("sheatfish_config.csv")
         };

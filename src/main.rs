@@ -280,10 +280,6 @@ fn control_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::Shee
                                 'k' => data.move_selected_coords((-1 * cmp::max(1, repeat_times as isize), 0)),
                                 'l' => data.move_selected_coords((0, cmp::max(1, repeat_times as isize))),
                                 'x' | 'd' => data.set_selected_cell_value(String::new()), // Cleared; rerender
-                                'i' => {
-                                    // Insert
-                                    // TODO: impl or remove
-                                },
                                 'a' => {
                                     // Append
                                     if let Some(cellval) = data.selected_cell_value() {
@@ -295,7 +291,7 @@ fn control_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::Shee
                                         // No cell: do nothing
                                     }
                                 },
-                                'c' => {
+                                'c' | 'i' => {
                                     // Change the cell's value
                                     if data.selected_cell_value().is_some() {
                                         // Exists: start editing
