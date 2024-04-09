@@ -3,6 +3,7 @@ pub mod remdata;
 pub mod sheetdata;
 pub mod configdata;
 pub mod render;
+use std::cmp;
 
 /*
 TODOS:
@@ -182,6 +183,7 @@ fn control_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::Shee
         // Input loop until a rerender
         let mut inputword: String = String::new();
         let mut insertmode: bool = false;
+        let mut repeat_times: u32 = 0;
         loop {
             let mut endinput: bool = true;
             // Get and take action on input
@@ -272,11 +274,11 @@ fn control_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::Shee
                                     // Quit out of the command cycle
                                     return;
                                 }
-                                'h' => data.move_selected_coords((0, -1)),
-                                'j' => data.move_selected_coords((1, 0)),
-                                'k' => data.move_selected_coords((-1, 0)),
-                                'l' => data.move_selected_coords((0, 1)),
-                                'x' => data.set_selected_cell_value(String::new()), // Cleared; rerender
+                                'h' => data.move_selected_coords((0, -1 * cmp::max(1, repeat_times as isize))),
+                                'j' => data.move_selected_coords((cmp::max(1, repeat_times as isize), 0)),
+                                'k' => data.move_selected_coords((-1 * cmp::max(1, repeat_times as isize), 0)),
+                                'l' => data.move_selected_coords((0, cmp::max(1, repeat_times as isize))),
+                                'x' | 'd' => data.set_selected_cell_value(String::new()), // Cleared; rerender
                                 'i' => {
                                     // Insert
                                     // TODO: impl or remove
@@ -300,7 +302,12 @@ fn control_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::Shee
                                         endinput = false;
                                         insertmode = true;
                                     }
-                                }
+                                },
+                                '0'..='9' => {
+                                    repeat_times *= 10;
+                                    repeat_times += char::to_digit(c, 10).unwrap_or(0);
+                                    endinput = false;
+                                },
                                 _ => {
                                     // Irrelevant character: do nothing
                                     endinput = false;

@@ -81,7 +81,9 @@ Delete the last character of the new value, or clear the current cell if there i
 
 - `[a]` - Append into a cell (add characters at the end)
 
-- `[x]` - Delete the value in the cell
+- `[x]`/`[d]` - Delete the value in the cell
+
+- `[0]`-`[9]` - Repeat the action (navigation) n times (repeat to type whole numbers, ex. `[2][5]` -> repeat 25 times)
 
 ## Config
 
