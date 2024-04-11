@@ -154,7 +154,7 @@ impl SheetData {
         }
         self.set_cell_value(self.selected.unwrap(), newval);
     }
-    /// Delete a row
+    /// Delete a row at a coordinate
     pub fn delete_row(&mut self, rowcoord: usize) -> bool {
         if rowcoord >= self.bounds().0 || self.bounds().0 <= 1 {
             return false;
@@ -167,12 +167,11 @@ impl SheetData {
         }
         true
     }
-    /// Delete a column
+    /// Delete a column at a coordinate
     pub fn delete_column(&mut self, colcoord: usize) -> bool {
         if colcoord >= self.bounds().1 || self.bounds().1 <= 1 {
             return false;
         }
-        // TODO: impl
         for row in &mut self.sheet {
             if colcoord >= row.len() {
                 continue;
@@ -183,6 +182,27 @@ impl SheetData {
             if col >= self.bounds().1 {
                 self.selected = Some((row, col - 1));
             }
+        }
+        true
+    }
+    /// Insert a row at a coordinate
+    pub fn insert_row(&mut self, rowcoord: usize) -> bool {
+        if rowcoord >= self.bounds().0 {
+            return false;
+        }
+        self.sheet.insert(rowcoord, vec![String::new(); self.bounds().1]);
+        true
+    }
+    /// Insert a column at a coordinate
+    pub fn insert_column(&mut self, colcoord: usize) -> bool {
+        if colcoord >= self.bounds().1 {
+            return false;
+        }
+        for row in &mut self.sheet {
+            if colcoord >= row.len() {
+                continue;
+            }
+            row.insert(colcoord, String::new());
         }
         true
     }

@@ -47,6 +47,9 @@ Navigate to the cell at a coordinate
 - `delete`/`d` (`"row"`/`"r"` or `"column"`/`"c"`) -
 Delete the currently selected row or column (ex. `d c` -> delete the current column)
 
+- `insert`/`o`/`i` (`"row"`/`"r"` or `"column"`/`"c"`) -
+Insert ("open") a new row or column before the currently selected row or column (ex. `o c` -> insert a new column)
+
 <!-- TODO: row/column deletion, insertion, etc. (with key repeating) -->
 <!-- TODO: undo tree? -->
 
@@ -85,10 +88,15 @@ Delete the last character of the new value, or clear the current cell if there i
 
 - `[a]` - Append into a cell (add characters at the end)
 
-- `[x]`/`[d]` - Delete the value in the cell
+- `[x]` - Delete the value in the cell
 
-<!-- Column/row insertion/"opening": use `[o]` then `[h]`/`[j]`/`[k]`/`[l]`? -->
-<!-- Column/row deletion: use `[d]` (x can delete the cell value, dd can delete the row, dD can delete the column, or something) -->
+- `[o] [c]` - Insert ("open") a column at the current selection
+
+- `[o] [r]`/`[o] [o]` - Insert ("open") a row at the current selection
+
+- `[d] [c]` - Delete the currently selected column
+
+- `[d] [r]`/`[d] [d]` - Delete a row at the current selection
 
 - `[0]`-`[9]` - Repeat the action (navigation) n times (repeat to type whole numbers, ex. `[2][5]` -> repeat 25 times)
 

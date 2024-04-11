@@ -83,7 +83,6 @@ fn main() {
         println!("Enter a command (see README.md for commands):");
 
         // todo: command class
-        // todo: branch logic using match
         let mut uin = String::new();
         std::io::stdin().read_line(&mut uin).expect("Failed to read line");
         let command: Vec<&str> = uin.trim().split(' ').collect();
@@ -93,7 +92,7 @@ fn main() {
                 match command[0].trim() {
                     "quit" | "q" => {
                         // Quit
-                        // TODO: quit confirmation
+                        // TODO: quit confirmation if unsaved (cancel with '!')
                         break;
                     },
                     "edit" | "e" => {
@@ -121,7 +120,7 @@ fn main() {
                         println!("{}", config.display());
                     },
                     _ => {
-                        println!("Unknown command."); // todo: refactor unknown
+                        println!("Unknown command."); // todo: refactor unknown ?
                     }
                 }
             },
@@ -163,6 +162,23 @@ fn main() {
                             }
                         }
                     },
+                    "insert" | "o" | "i" => {
+                        match command[1].trim() {
+                            "row" | "r" => {
+                                data.insert_row(data.selected.unwrap_or((0, 0)).0);
+                                // Start control cycle
+                                control_cycle(&mut config, &mut data);
+                            },
+                            "column" | "col" | "c" => {
+                                data.insert_column(data.selected.unwrap_or((0, 0)).1);
+                                // Start control cycle
+                                control_cycle(&mut config, &mut data);
+                            },
+                            _ => {
+                                println!("Unknown command.");
+                            }
+                        }
+                    }
                     _ => {
                         println!("Unknown command.");
                     }
@@ -170,7 +186,7 @@ fn main() {
             },
             3 => {
                 match command[0].trim() {
-                    // TODO: row/column deletion, insertion, etc. (with key repeating) -->
+                    // TODO: row/column deletion, insertion, etc. with key repeating -->
                     "nav" => {
                         // Navigate to a cell (command[2], command[1])
                         data.set_selected_coords((command[2].parse().unwrap_or(0), command[1].parse().unwrap_or(0)));
@@ -202,6 +218,7 @@ fn control_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::Shee
         // Input loop until a rerender
         let mut inputword: String = String::new();
         let mut insertmode: bool = false;
+        let mut priorcapture: char = ' '; // TODO: use
         let mut repeat_times: u32 = 0;
         loop {
             let mut endinput: bool = true;
@@ -297,7 +314,12 @@ fn control_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::Shee
                                 'j' => data.move_selected_coords((cmp::max(1, repeat_times as isize), 0)),
                                 'k' => data.move_selected_coords((-1 * cmp::max(1, repeat_times as isize), 0)),
                                 'l' => data.move_selected_coords((0, cmp::max(1, repeat_times as isize))),
-                                'x' | 'd' => data.set_selected_cell_value(String::new()), // Cleared; rerender
+                                'x' => data.set_selected_cell_value(String::new()), // Cleared; rerender
+                                'd' | 'o' if priorcapture != 'd' && priorcapture != 'o' => {
+                                    // Delete or open: followed by a 'c', 'd', 'o', or 'r', so do not exit yet
+                                    priorcapture = c;
+                                    endinput = false;
+                                }
                                 'a' => {
                                     // Append
                                     if let Some(cellval) = data.selected_cell_value() {
@@ -307,6 +329,30 @@ fn control_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::Shee
                                         insertmode = true;
                                     } else {
                                         // No cell: do nothing
+                                    }
+                                },
+                                'c' if priorcapture == 'd' => {
+                                    // Delete a column
+                                    for _i in 0..repeat_times {
+                                        data.delete_column(data.selected.unwrap_or((0, 0)).1);
+                                    }
+                                },
+                                'c' if priorcapture == 'o' => {
+                                    // Insert a column
+                                    for _i in 0..repeat_times {
+                                        data.insert_column(data.selected.unwrap_or((0, 0)).1);
+                                    }
+                                },
+                                'd' | 'r' if priorcapture == 'd' => {
+                                    // Delete a row
+                                    for _i in 0..repeat_times {
+                                        data.delete_row(data.selected.unwrap_or((0, 0)).0);
+                                    }
+                                },
+                                'o' | 'r' if priorcapture == 'o' => {
+                                    // Insert a row
+                                    for _i in 0..repeat_times {
+                                        data.insert_row(data.selected.unwrap_or((0, 0)).0);
                                     }
                                 },
                                 'c' | 'i' => {
