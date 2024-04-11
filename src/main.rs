@@ -303,6 +303,7 @@ fn control_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::Shee
                             print!("{}", c); 
                             endinput = false;
                         } else {
+                            let real_repeat_times = cmp::max(1, repeat_times as isize);
                             // Normal mode command?
                             // TODO: switch based on the character c (normal mode)
                             match c {
@@ -310,13 +311,14 @@ fn control_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::Shee
                                     // Quit out of the command cycle
                                     return;
                                 }
-                                'h' => data.move_selected_coords((0, -1 * cmp::max(1, repeat_times as isize))),
-                                'j' => data.move_selected_coords((cmp::max(1, repeat_times as isize), 0)),
-                                'k' => data.move_selected_coords((-1 * cmp::max(1, repeat_times as isize), 0)),
-                                'l' => data.move_selected_coords((0, cmp::max(1, repeat_times as isize))),
+                                'h' => data.move_selected_coords((0, -1 * real_repeat_times)),
+                                'j' => data.move_selected_coords((real_repeat_times, 0)),
+                                'k' => data.move_selected_coords((-1 * real_repeat_times, 0)),
+                                'l' => data.move_selected_coords((0, real_repeat_times)),
                                 'x' => data.set_selected_cell_value(String::new()), // Cleared; rerender
                                 'd' | 'o' if priorcapture != 'd' && priorcapture != 'o' => {
                                     // Delete or open: followed by a 'c', 'd', 'o', or 'r', so do not exit yet
+                                    println!("DBG: first char: {}", c);
                                     priorcapture = c;
                                     endinput = false;
                                 }
@@ -333,25 +335,26 @@ fn control_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::Shee
                                 },
                                 'c' if priorcapture == 'd' => {
                                     // Delete a column
-                                    for _i in 0..repeat_times {
+                                    for _i in 0..real_repeat_times {
                                         data.delete_column(data.selected.unwrap_or((0, 0)).1);
                                     }
                                 },
                                 'c' if priorcapture == 'o' => {
                                     // Insert a column
-                                    for _i in 0..repeat_times {
+                                    for _i in 0..real_repeat_times {
                                         data.insert_column(data.selected.unwrap_or((0, 0)).1);
                                     }
                                 },
                                 'd' | 'r' if priorcapture == 'd' => {
+                                    println!("DBG: row deleted (dd/dr)");
                                     // Delete a row
-                                    for _i in 0..repeat_times {
+                                    for _i in 0..real_repeat_times {
                                         data.delete_row(data.selected.unwrap_or((0, 0)).0);
                                     }
                                 },
                                 'o' | 'r' if priorcapture == 'o' => {
                                     // Insert a row
-                                    for _i in 0..repeat_times {
+                                    for _i in 0..real_repeat_times {
                                         data.insert_row(data.selected.unwrap_or((0, 0)).0);
                                     }
                                 },

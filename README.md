@@ -135,3 +135,5 @@ Max height of cells to show on screen at once before scrolling (integer from 1..
 
 - `vimmode` -
 Set to 1 to use the Vim Mode keybinds (see above) (integer from 0..=1, default 0)
+
+<!-- TODO: config option to save files without trailing commas>

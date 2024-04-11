@@ -1,4 +1,5 @@
 use std::fs;
+use std::cmp;
 
 /// Stores the data for the sheet
 pub struct SheetData {
@@ -55,18 +56,23 @@ impl SheetData {
             }
             self.sheet.push(Vec::new());
             let sheetn = self.sheet.len();
-            let mut n = 0;
+            let mut n: usize = 0;
             for resword in resline.split(',') {
                 self.sheet[sheetn - 1].push(resword.trim().to_string());
                 n += 1;
             }
-            if bound_width == 0 {
-                bound_width = n;
-            }
+            bound_width = cmp::max(bound_width, n);
             // Fill in extra lines
             while n < bound_width {
                 self.sheet[sheetn - 1].push(String::new());
                 n += 1;
+            }
+        }
+        // TODO: test rectangularization
+        // Make the sheet rectangular, if it is not already, given the longest row
+        for line in &mut self.sheet {
+            while line.len() < bound_width {
+                line.push(String::new());
             }
         }
         // So far, the file is "saved" (may be modified by loading, but saving should do nothing currently)
@@ -165,6 +171,7 @@ impl SheetData {
                 self.selected = Some((row - 1, col));
             }
         }
+        self.unsaved = true; // Was modified
         true
     }
     /// Delete a column at a coordinate
@@ -183,6 +190,7 @@ impl SheetData {
                 self.selected = Some((row, col - 1));
             }
         }
+        self.unsaved = true; // Was modified
         true
     }
     /// Insert a row at a coordinate
@@ -191,6 +199,7 @@ impl SheetData {
             return false;
         }
         self.sheet.insert(rowcoord, vec![String::new(); self.bounds().1]);
+        self.unsaved = true; // Was modified
         true
     }
     /// Insert a column at a coordinate
@@ -204,6 +213,7 @@ impl SheetData {
             }
             row.insert(colcoord, String::new());
         }
+        self.unsaved = true; // Was modified
         true
     }
 }
