@@ -1,6 +1,6 @@
 # Sheatfish
 
-An incredibly simple, lightweight terminal-based spreadsheet editor written in Rust!
+An incredibly simple, lightweight terminal-based spreadsheet/csv editor written in Rust!
 
 Features:
 
@@ -9,13 +9,36 @@ Features:
 
 <!-- todo: add image of a sheatfish and a spreadsheet screenshot -->
 
-:warning: Currently supports .csv files only.
+:warning: Currently a work in progress; not all features are implemented yet
 
-:warning: Currently a work in progress; not yet fully usable
+![A sheatfish](sheatfish.jpg "A sheatfish")
+
+UI example:
+
+```
+demo_file.csv (10 x 9)
+----
+        0      1      2      3      4      5      6      7      8
+ 0      X-VAL  Y-VAL  Z-VAL
+ 1      0      0      0
+ 2      1      1      0
+ 3     [2    ] 4      0
+ 4      3      9      0
+ 5      4      16     0
+ 6
+ 7
+ 8
+ 9
+----
+(3, 0): 2
+```
+
+## Installation
+
+1. Download this source code
+2. Build using `cargo`
 
 ## Commands (in command prompt)
-
-:warning: Currently a work in progress; these commands do not all exist yet
 
 System
 
@@ -50,8 +73,7 @@ Delete the currently selected row or column (ex. `d c` -> delete the current col
 - `insert`/`o`/`i` (`"row"`/`"r"` or `"column"`/`"c"`) -
 Insert ("open") a new row or column before the currently selected row or column (ex. `o c` -> insert a new column)
 
-<!-- TODO: row/column deletion, insertion, etc. (with key repeating) -->
-<!-- TODO: undo tree? -->
+<!-- TODO: undo commands, undo tree? -->
 
 ## Keybinds (while editing)
 
@@ -98,7 +120,7 @@ Delete the last character of the new value, or clear the current cell if there i
 
 - `[d] [r]`/`[d] [d]` - Delete a row at the current selection
 
-- `[0]`-`[9]` - Repeat the action (navigation) n times (repeat to type whole numbers, ex. `[2][5]` -> repeat 25 times)
+- `[0]`-`[9]` - Repeat the action (navigation) n times (repeat to type whole numbers, ex. `[2][5][j]` -> move down 25 cells, `[4][d][d]` -> delete 4 rows)
 
 ## Config
 
