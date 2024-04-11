@@ -22,13 +22,13 @@ System
 - `quit`/`q` -
 Quit
 
-- `edit` -
+- `edit`/`e` -
 Exit the command prompt (return to editing a file)
 
 - `new` - Create a new blank file
 
 - `open {filename or path}`/`e {filename or path}` -
-Open a .csv file
+Open a .csv file and start editing
 
 - `save {optional: filename or path}`/`w {optional: filename or path}` -
 Save/write to a .csv file; if path not given, save to the current open file
@@ -43,6 +43,12 @@ Editing
 
 - `nav {column #} {row #}` -
 Navigate to the cell at a coordinate
+
+- `delete`/`d` (`"row"`/`"r"` or `"column"`/`"c"`) -
+Delete the currently selected row or column (ex. `d c` -> delete the current column)
+
+<!-- TODO: row/column deletion, insertion, etc. (with key repeating) -->
+<!-- TODO: undo tree? -->
 
 ## Keybinds (while editing)
 
@@ -80,6 +86,9 @@ Delete the last character of the new value, or clear the current cell if there i
 - `[a]` - Append into a cell (add characters at the end)
 
 - `[x]`/`[d]` - Delete the value in the cell
+
+<!-- Column/row insertion/"opening": use `[o]` then `[h]`/`[j]`/`[k]`/`[l]`? -->
+<!-- Column/row deletion: use `[d]` (x can delete the cell value, dd can delete the row, dD can delete the column, or something) -->
 
 - `[0]`-`[9]` - Repeat the action (navigation) n times (repeat to type whole numbers, ex. `[2][5]` -> repeat 25 times)
 

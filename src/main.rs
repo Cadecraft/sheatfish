@@ -7,16 +7,15 @@ use std::cmp;
 
 /*
 TODOS:
-    - Pan/zoom (only display a 16x16 area by default)
     - Git ignore editorconfig
     - All commands and features
-    - File loading
-    - Implement instant input with arrow keys, etc. (ncurses or crossterm)
     - Colors
     - Modified marker (*) next to filename and warning on quit
     - Command line arguments?
     - Zoom features
 */
+
+// TODO: refactor input functions to another file
 
 /// Read inputted character
 fn _read_char() -> char {
@@ -55,8 +54,8 @@ fn read_key() -> crossterm::event::KeyCode {
 fn main() {
     // Initialize REM, introductions
     let rem = remdata::RemData::new(
-        "0.1.1",
-        "2024/03/09",
+        "0.2.0",
+        "2024/04/11",
         true
     );
     println!("SHEATFISH by Cadecraft");
@@ -94,16 +93,17 @@ fn main() {
                 match command[0].trim() {
                     "quit" | "q" => {
                         // Quit
+                        // TODO: quit confirmation
                         break;
                     },
-                    "edit" => {
+                    "edit" | "e" => {
                         // Back to editing the file
                         // Start control cycle
                         control_cycle(&mut config, &mut data);
                     },
                     "new" => {
                         // New file: load a blank default vector
-                        data.load_vector(&vec![vec!["".to_string(); 10]; 10]);
+                        data.load_vector(&vec![vec!["".to_string(); 16]; 16]);
                         // Start control cycle
                         control_cycle(&mut config, &mut data);
                     },
@@ -146,6 +146,23 @@ fn main() {
                             println!("Saved file.");
                         }
                     },
+                    "delete" | "d" => {
+                        match command[1].trim() {
+                            "row" | "r" => {
+                                data.delete_row(data.selected.unwrap_or((0, 0)).0);
+                                // Start control cycle
+                                control_cycle(&mut config, &mut data);
+                            },
+                            "column" | "col" | "c" => {
+                                data.delete_column(data.selected.unwrap_or((0, 0)).1);
+                                // Start control cycle
+                                control_cycle(&mut config, &mut data);
+                            },
+                            _ => {
+                                println!("Unknown command.");
+                            }
+                        }
+                    },
                     _ => {
                         println!("Unknown command.");
                     }
@@ -153,6 +170,7 @@ fn main() {
             },
             3 => {
                 match command[0].trim() {
+                    // TODO: row/column deletion, insertion, etc. (with key repeating) -->
                     "nav" => {
                         // Navigate to a cell (command[2], command[1])
                         data.set_selected_coords((command[2].parse().unwrap_or(0), command[1].parse().unwrap_or(0)));

@@ -154,4 +154,36 @@ impl SheetData {
         }
         self.set_cell_value(self.selected.unwrap(), newval);
     }
+    /// Delete a row
+    pub fn delete_row(&mut self, rowcoord: usize) -> bool {
+        if rowcoord >= self.bounds().0 || self.bounds().0 <= 1 {
+            return false;
+        }
+        self.sheet.remove(rowcoord);
+        if let Some((row, col)) = self.selected {
+            if row >= self.bounds().0 {
+                self.selected = Some((row - 1, col));
+            }
+        }
+        true
+    }
+    /// Delete a column
+    pub fn delete_column(&mut self, colcoord: usize) -> bool {
+        if colcoord >= self.bounds().1 || self.bounds().1 <= 1 {
+            return false;
+        }
+        // TODO: impl
+        for row in &mut self.sheet {
+            if colcoord >= row.len() {
+                continue;
+            }
+            row.remove(colcoord);
+        }
+        if let Some((row, col)) = self.selected {
+            if col >= self.bounds().1 {
+                self.selected = Some((row, col - 1));
+            }
+        }
+        true
+    }
 }
