@@ -100,6 +100,8 @@ Delete the last character of the new value, or clear the current cell if there i
 
 - `[h]`/`[j]`/`[k]`/`[l]` - Navigate left/down/up/right one cell
 
+<!-- TODO: impl w and b -->
+
 - `[w]` - Navigate to the next (right) set of filled-in cells
 
 - `[b]` - Navigate to the previous (left) set of filled-in cells
@@ -113,6 +115,8 @@ Delete the last character of the new value, or clear the current cell if there i
 - `[x]` - Delete the value in the cell
 
 - `[o] [c]` - Insert ("open") a column at the current selection
+
+<!-- TODO: support backspace key -->
 
 - `[o] [r]`/`[o] [o]` - Insert ("open") a row at the current selection
 

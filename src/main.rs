@@ -5,14 +5,9 @@ pub mod configdata;
 pub mod render;
 pub mod ioutils;
 use ioutils::{
-    printat, clear
+    printat, clear, read_key, set_raw_mode, flush
 };
-use std::{
-    cmp, io, io::Write
-};
-use crossterm::{
-    execute, queue, cursor, terminal, style::{self, Stylize}
-};
+use std::{ cmp, io };
 
 /*
 TODOS:
@@ -23,44 +18,8 @@ TODOS:
     - Modified marker (*) next to filename and warning on quit
     - Command line arguments?
     - Zoom features
+    - Rerender after commands like save, delete, etc.
 */
-
-// TODO: refactor input functions to another file
-
-/// Read inputted character
-fn _read_char() -> char {
-    if let Ok(crossterm::event::Event::Key(crossterm::event::KeyEvent {
-        code: crossterm::event::KeyCode::Char(c),
-        kind: crossterm::event::KeyEventKind::Press,
-        modifiers: _,
-        state: _,
-    })) = crossterm::event::read() {
-        return c;
-    }
-    // Could not read the event
-    '!'
-}
-
-/// Wait for and read an inputted key code
-fn read_key() -> crossterm::event::KeyCode {
-    // Read the event
-    match crossterm::event::read() {
-        // Only return a code on the Ok key event
-        Ok(crossterm::event::Event::Key(k)) => {
-            // Only return if the key is pressed
-            if k.kind == crossterm::event::KeyEventKind::Press {
-                k.code
-            } else {
-                crossterm::event::KeyCode::Null
-            }
-        }
-        _ => {
-            crossterm::event::KeyCode::Null
-        }
-    }
-}
-
-// TODO: refactor this too
 
 /// Main function
 fn main() -> io::Result<()> {
@@ -72,7 +31,8 @@ fn main() -> io::Result<()> {
     );
     // First, enable raw mode and create the stdout
     let mut stdout = io::stdout();
-    terminal::enable_raw_mode().expect("ERR: Crossterm could not enable Raw Mode");
+    set_raw_mode(true)?;
+    //terminal::enable_raw_mode().expect("ERR: Crossterm could not enable Raw Mode");
     clear(&mut stdout)?;
     printat(0, 0, "SHEATFISH by Cadecraft", &mut stdout)?;
     printat(0, 1, &rem.fmt(false), &mut stdout)?;
@@ -108,9 +68,10 @@ fn main() -> io::Result<()> {
         // Display
         printat(0, (vbottom - vtop + 5) as u16, "                                                                                   ", &mut stdout)?;
         printat(0, (vbottom - vtop + 5) as u16, "Enter a command (see README.md for commands): ", &mut stdout)?;
-        stdout.flush()?;
+        flush(&mut stdout)?;
 
-        terminal::disable_raw_mode().expect("ERR: Crossterm could not disable Raw Mode");
+        set_raw_mode(false)?;
+        //terminal::disable_raw_mode().expect("ERR: Crossterm could not disable Raw Mode");
         // todo: command class
         let mut uin = String::new();
         std::io::stdin().read_line(&mut uin).expect("Failed to read line");
@@ -172,6 +133,7 @@ fn main() -> io::Result<()> {
                             println!("Error saving file.");
                         } else {
                             println!("Saved file.");
+                            // TODO: rerender after save (remove *)
                         }
                     },
                     "delete" | "d" => {
@@ -249,7 +211,7 @@ fn control_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::Shee
         // Input loop until a rerender
         let mut inputword: String = String::new();
         let mut insertmode: bool = false;
-        let mut priorcapture: char = ' '; // TODO: use
+        let mut priorcapture: char = ' ';
         let mut repeat_times: u32 = 0;
         loop {
             let mut endinput: bool = true;
@@ -277,8 +239,6 @@ fn control_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::Shee
                         }
                     }
                     crossterm::event::KeyCode::Enter => {
-                        // todo: change command:
-                        // todo: if no inputword, edit curr cell data (set inputword)
                         // Enter the data if it exists, then move down
                         if !inputword.is_empty() {
                             // Already typed a word: enter it and move down
@@ -303,7 +263,7 @@ fn control_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::Shee
                     crossterm::event::KeyCode::Char(c) => {
                         // Char c has been typed
                         inputword.push(c);
-                        // todo: print properly for displaying
+                        // todo: print properly for displaying (CROSSTERM)
                         print!("{}", c); 
                         endinput = false;
                     }
@@ -330,13 +290,12 @@ fn control_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::Shee
                         if insertmode {
                             // Insert this character
                             inputword.push(c);
-                            // todo: print properly for displaying
+                            // todo: print properly for displaying (CROSSTERM)
                             print!("{}", c); 
                             endinput = false;
                         } else {
                             let real_repeat_times = cmp::max(1, repeat_times as isize);
                             // Normal mode command?
-                            // TODO: switch based on the character c (normal mode)
                             match c {
                                 ':' => {
                                     // Quit out of the command cycle
@@ -422,5 +381,5 @@ fn control_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::Shee
     }
 
     // Finished successfully
-    io::Result::Ok(())
+    //io::Result::Ok(())
 }

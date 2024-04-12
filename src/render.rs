@@ -1,14 +1,10 @@
 use crate::sheetdata;
 use crate::configdata;
 use crate::ioutils::{
-    printat, printstyl, clear
+    printat, printstyl, clear, set_raw_mode, flush
 };
-use std::{
-    cmp, io, io::Write
-};
-use crossterm::{
-    execute, queue, cursor, terminal, style::{self, Stylize}
-};
+use std::{ cmp, io };
+use crossterm::style::Stylize;
 
 /// Format the inner contents of a cell
 fn fmt_string_padding(instr: &str, maxwidth: usize) -> String {
@@ -25,11 +21,8 @@ fn fmt_string_padding(instr: &str, maxwidth: usize) -> String {
 
 /// Render the sheet
 pub fn render(config: &mut configdata::ConfigData, data: &sheetdata::SheetData, stdout: &mut io::Stdout) -> io::Result<()> {
-    // TODO: render this in Crossterm
-    terminal::enable_raw_mode().expect("ERR: Crossterm could not enable raw mode");
-
-    // Clear the screen
-    //for _i in 0..20 { println!(); } // todo: better clear
+    // Prep
+    set_raw_mode(true)?;
     clear(stdout)?;
 
     // Render sheet title and info
@@ -48,8 +41,8 @@ pub fn render(config: &mut configdata::ConfigData, data: &sheetdata::SheetData, 
     let maxcellwidth: u16 = config.get_value("maxcellwidth").unwrap_or(5).try_into().unwrap_or(5);
 
     // Render row and column titles
-    // TODO: colors
-    // TODO: max view window wrap stuff
+    // TODO: more colors
+    // TODO: display a warning/error/instructions if the terminal size is too small to fit the whole screen
     let mut xpos: u16 = 1;
     for col in vleft..vright {
         if selectedcoords.1 == col {
@@ -106,58 +99,8 @@ pub fn render(config: &mut configdata::ConfigData, data: &sheetdata::SheetData, 
         printat(0, (vbottom - vtop + 4) as u16, "no cell selected", stdout)?;
     }
 
-    /*
-    // Render sheet title and info
-    println!("{}{} ({} x {})", if data.unsaved { "*" } else { "" }, data.file_path, data.bounds().0, data.bounds().1);
-    println!("----");
-
-    // Determine sheet bounds
-    let viewwidth: usize = config.get_value("viewcellswidth").unwrap_or(10).try_into().unwrap_or(10);
-    let viewheight: usize = config.get_value("viewcellsheight").unwrap_or(10).try_into().unwrap_or(10);
-    let selectedcoords = data.selected.unwrap_or((0, 0));
-    let vleft: usize = cmp::max(selectedcoords.1.saturating_sub(viewwidth / 2), 0);
-    let vright: usize = cmp::min(vleft + viewwidth, data.bounds().1); // Non-inclusive bound
-    let vtop: usize = cmp::max(selectedcoords.0.saturating_sub(viewheight / 2), 0);
-    let vbottom: usize = cmp::min(vtop + viewheight, data.bounds().0);
-
-    // Render column titles
-    print!(" {} ", fmt_string_padding("", config.get_value("maxcellwidth").unwrap_or(5).try_into().unwrap_or(5)));
-    for col in vleft..vright {
-        // TODO: letters or numbers?
-        print!(" {} ", fmt_string_padding(&col.to_string(), config.get_value("maxcellwidth").unwrap_or(5).try_into().unwrap_or(5)))
-    }
-    println!();
-    // Render all sheet rows with cells
-    // todo: colors
-    // TODO: max view width in cells, pan the window around to keep the cursor in the center
-    for row in vtop..vbottom {
-        // Render row title
-        // TODO: letters or numbers?
-        print!(" {} ", fmt_string_padding(&row.to_string(), config.get_value("maxcellwidth").unwrap_or(5).try_into().unwrap_or(5)));
-        for col in vleft..vright {
-            // Get formatted cell value with padding
-            let cellval = data.cell((row, col)).unwrap_or("");
-            let fmtval = fmt_string_padding(cellval, config.get_value("maxcellwidth").unwrap_or(5).try_into().unwrap_or(5));
-            // Render based on user selection
-            if data.selected.is_some() && (row, col) == data.selected.unwrap() {
-                print!("[{}]", fmtval);
-            } else {
-                print!(" {} ", fmtval);
-            }
-        }
-        println!();
-    }
-    println!("----");
-
-    // Render selected cell info
-    if data.selected.is_some() && data.selected_cell_value().is_some() {
-        println!("({}, {}): {}", data.selected.unwrap().0, data.selected.unwrap().1, data.selected_cell_value().unwrap());
-    } else {
-        println!("no cell selected");
-    }*/
-
     // Flush the buffer to finish
-    stdout.flush()?;
+    flush(stdout)?;
 
     // Was successful
     io::Result::Ok(())
