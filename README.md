@@ -104,9 +104,9 @@ Delete the last character of the new value, or clear the current cell if there i
 
 - `[b]` - Navigate to the previous (left) set of filled-in cells
 
-- `[esc]` - Exit insert mode (go into "normal" mode)
+- `[c]`/`[i]` - Change the value of a cell to the literal value typed immediately after
 
-- `[c]`/`[i]` - Change the value of a cell
+- `[esc]` - Exit insert mode (go into "normal" mode, committing cell changes)
 
 - `[a]` - Append into a cell (add characters at the end)
 

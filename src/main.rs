@@ -3,11 +3,21 @@ pub mod remdata;
 pub mod sheetdata;
 pub mod configdata;
 pub mod render;
-use std::cmp;
+pub mod ioutils;
+use ioutils::{
+    printat, clear
+};
+use std::{
+    cmp, io, io::Write
+};
+use crossterm::{
+    execute, queue, cursor, terminal, style::{self, Stylize}
+};
 
 /*
 TODOS:
     - Git ignore editorconfig
+    - Render fully in Crossterm for colors and smooth frame transitions
     - All commands and features
     - Colors
     - Modified marker (*) next to filename and warning on quit
@@ -50,18 +60,28 @@ fn read_key() -> crossterm::event::KeyCode {
     }
 }
 
+// TODO: refactor this too
+
 /// Main function
-fn main() {
+fn main() -> io::Result<()> {
     // Initialize REM, introductions
     let rem = remdata::RemData::new(
         "0.2.0",
         "2024/04/11",
         true
     );
+    // First, enable raw mode and create the stdout
+    let mut stdout = io::stdout();
+    terminal::enable_raw_mode().expect("ERR: Crossterm could not enable Raw Mode");
+    clear(&mut stdout)?;
+    printat(0, 0, "SHEATFISH by Cadecraft", &mut stdout)?;
+    printat(0, 1, &rem.fmt(false), &mut stdout)?;
+    printat(0, 2, "====", &mut stdout)?;
+    /*queue!(stdout, cursor::MoveTo(0,0), style::PrintStyledContent("SHEATFISH by Cadecraft".reset()))?;
     println!("SHEATFISH by Cadecraft");
     println!("{}", rem.fmt(false));
     println!("====");
-    println!();
+    println!();*/
 
     // Initialize data
     let mut config = configdata::ConfigData::new();
@@ -80,8 +100,17 @@ fn main() {
     // Start the command cycle
     loop {
         // todo: better cycle appearance
-        println!("Enter a command (see README.md for commands):");
+        // Disable raw mode for commands
+        let selectedcoords = data.selected.unwrap_or((0, 0));
+        let viewheight: usize = config.get_value("viewcellsheight").unwrap_or(10).try_into().unwrap_or(10);
+        let vtop: usize = cmp::max(selectedcoords.0.saturating_sub(viewheight / 2), 0);
+        let vbottom: usize = cmp::min(vtop + viewheight, data.bounds().0);
+        // Display
+        printat(0, (vbottom - vtop + 5) as u16, "                                                                                   ", &mut stdout)?;
+        printat(0, (vbottom - vtop + 5) as u16, "Enter a command (see README.md for commands): ", &mut stdout)?;
+        stdout.flush()?;
 
+        terminal::disable_raw_mode().expect("ERR: Crossterm could not disable Raw Mode");
         // todo: command class
         let mut uin = String::new();
         std::io::stdin().read_line(&mut uin).expect("Failed to read line");
@@ -98,13 +127,13 @@ fn main() {
                     "edit" | "e" => {
                         // Back to editing the file
                         // Start control cycle
-                        control_cycle(&mut config, &mut data);
+                        control_cycle(&mut config, &mut data, &mut stdout)?;
                     },
                     "new" => {
                         // New file: load a blank default vector
                         data.load_vector(&vec![vec!["".to_string(); 16]; 16]);
                         // Start control cycle
-                        control_cycle(&mut config, &mut data);
+                        control_cycle(&mut config, &mut data, &mut stdout)?;
                     },
                     "save" | "w" => {
                         // Save the file to the same path, if possible
@@ -133,7 +162,7 @@ fn main() {
                             println!("Error opening file.");
                         } else {
                             // Start the control cycle
-                            control_cycle(&mut config, &mut data);
+                            control_cycle(&mut config, &mut data, &mut stdout)?;
                         }
                     },
                     "save" | "w" => {
@@ -150,12 +179,12 @@ fn main() {
                             "row" | "r" => {
                                 data.delete_row(data.selected.unwrap_or((0, 0)).0);
                                 // Start control cycle
-                                control_cycle(&mut config, &mut data);
+                                control_cycle(&mut config, &mut data, &mut stdout)?;
                             },
                             "column" | "col" | "c" => {
                                 data.delete_column(data.selected.unwrap_or((0, 0)).1);
                                 // Start control cycle
-                                control_cycle(&mut config, &mut data);
+                                control_cycle(&mut config, &mut data, &mut stdout)?;
                             },
                             _ => {
                                 println!("Unknown command.");
@@ -167,12 +196,12 @@ fn main() {
                             "row" | "r" => {
                                 data.insert_row(data.selected.unwrap_or((0, 0)).0);
                                 // Start control cycle
-                                control_cycle(&mut config, &mut data);
+                                control_cycle(&mut config, &mut data, &mut stdout)?;
                             },
                             "column" | "col" | "c" => {
                                 data.insert_column(data.selected.unwrap_or((0, 0)).1);
                                 // Start control cycle
-                                control_cycle(&mut config, &mut data);
+                                control_cycle(&mut config, &mut data, &mut stdout)?;
                             },
                             _ => {
                                 println!("Unknown command.");
@@ -191,7 +220,7 @@ fn main() {
                         // Navigate to a cell (command[2], command[1])
                         data.set_selected_coords((command[2].parse().unwrap_or(0), command[1].parse().unwrap_or(0)));
                         // Start the control cycle
-                        control_cycle(&mut config, &mut data);
+                        control_cycle(&mut config, &mut data, &mut stdout)?;
                     },
                     "config" => {
                         // Set a config to a value
@@ -207,13 +236,15 @@ fn main() {
             }
         }
     }
+
+    io::Result::Ok(())
 }
 
 /// Command cycle function
-fn control_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::SheetData) {
+fn control_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::SheetData, stdout: &mut io::Stdout) -> io::Result<()> {
     loop {
         // Render
-        render::render(config, &data);
+        render::render(config, &data, stdout)?;
 
         // Input loop until a rerender
         let mut inputword: String = String::new();
@@ -229,7 +260,7 @@ fn control_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::Shee
                 match ink {
                     crossterm::event::KeyCode::Esc => {
                         // Quit out of the command cycle
-                        return;
+                        return io::Result::Ok(());
                     }
                     crossterm::event::KeyCode::Up => data.move_selected_coords((-1, 0)),
                     crossterm::event::KeyCode::Left => data.move_selected_coords((0, -1)),
@@ -309,7 +340,7 @@ fn control_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::Shee
                             match c {
                                 ':' => {
                                     // Quit out of the command cycle
-                                    return;
+                                    return io::Result::Ok(());
                                 }
                                 'h' => data.move_selected_coords((0, -1 * real_repeat_times)),
                                 'j' => data.move_selected_coords((real_repeat_times, 0)),
@@ -318,7 +349,6 @@ fn control_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::Shee
                                 'x' => data.set_selected_cell_value(String::new()), // Cleared; rerender
                                 'd' | 'o' if priorcapture != 'd' && priorcapture != 'o' => {
                                     // Delete or open: followed by a 'c', 'd', 'o', or 'r', so do not exit yet
-                                    println!("DBG: first char: {}", c);
                                     priorcapture = c;
                                     endinput = false;
                                 }
@@ -346,7 +376,6 @@ fn control_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::Shee
                                     }
                                 },
                                 'd' | 'r' if priorcapture == 'd' => {
-                                    println!("DBG: row deleted (dd/dr)");
                                     // Delete a row
                                     for _i in 0..real_repeat_times {
                                         data.delete_row(data.selected.unwrap_or((0, 0)).0);
@@ -391,4 +420,7 @@ fn control_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::Shee
             }
         }
     }
+
+    // Finished successfully
+    io::Result::Ok(())
 }
