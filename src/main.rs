@@ -19,6 +19,7 @@ TODOS:
     - Command line arguments?
     - Zoom features
     - Rerender after commands like save, delete, etc.
+    - Refactor the main file
 */
 
 /// Main function
@@ -202,6 +203,20 @@ fn main() -> io::Result<()> {
     io::Result::Ok(())
 }
 
+// todo: refactor ?
+/// Utility to print an input word
+fn print_input_word(config: &mut configdata::ConfigData, data: &mut sheetdata::SheetData, stdout: &mut io::Stdout, inputword: &str) -> io::Result<()> {
+    // TODO: move the whole inputword display feature into render (along with bool for isInputting) ?
+    let selectedcoords = data.selected.unwrap_or((0, 0));
+    let viewheight: usize = config.get_value("viewcellsheight").unwrap_or(10).try_into().unwrap_or(10);
+    let vtop: usize = cmp::max(selectedcoords.0.saturating_sub(viewheight / 2), 0);
+    let vbottom: usize = cmp::min(vtop + viewheight, data.bounds().0);
+    printat(15, (vbottom - vtop + 4) as u16, "                              ", stdout)?;
+    printat(15, (vbottom - vtop + 4) as u16, inputword, stdout)?;
+    flush(stdout)?;
+    io::Result::Ok(())
+}
+
 /// Command cycle function
 fn control_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::SheetData, stdout: &mut io::Stdout) -> io::Result<()> {
     loop {
@@ -253,6 +268,7 @@ fn control_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::Shee
                                 } else {
                                     // Not empty: start editing
                                     inputword = cellval.to_string();
+                                    print_input_word(config, data, stdout, &inputword)?;
                                     endinput = false;
                                 }
                             } else {
@@ -263,8 +279,7 @@ fn control_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::Shee
                     crossterm::event::KeyCode::Char(c) => {
                         // Char c has been typed
                         inputword.push(c);
-                        // todo: print properly for displaying (CROSSTERM)
-                        print!("{}", c); 
+                        print_input_word(config, data, stdout, &inputword)?;
                         endinput = false;
                     }
                     _ => {
@@ -290,8 +305,8 @@ fn control_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::Shee
                         if insertmode {
                             // Insert this character
                             inputword.push(c);
-                            // todo: print properly for displaying (CROSSTERM)
-                            print!("{}", c); 
+                            // TODO: impl this in the other cases, and in the case of 'inserting' into a cell (test with simple keybind mode)
+                            print_input_word(config, data, stdout, &inputword)?;
                             endinput = false;
                         } else {
                             let real_repeat_times = cmp::max(1, repeat_times as isize);
@@ -316,6 +331,7 @@ fn control_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::Shee
                                     if let Some(cellval) = data.selected_cell_value() {
                                         // Exists: start editing
                                         inputword = cellval.to_string();
+                                        print_input_word(config, data, stdout, &inputword)?;
                                         endinput = false;
                                         insertmode = true;
                                     } else {
@@ -351,6 +367,7 @@ fn control_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::Shee
                                     if data.selected_cell_value().is_some() {
                                         // Exists: start editing
                                         inputword.clear();
+                                        print_input_word(config, data, stdout, &inputword)?;
                                         endinput = false;
                                         insertmode = true;
                                     }

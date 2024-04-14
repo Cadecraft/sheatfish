@@ -26,6 +26,7 @@ pub fn render(config: &mut configdata::ConfigData, data: &sheetdata::SheetData, 
     clear(stdout)?;
 
     // Render sheet title and info
+    // TODO: print filename only (not full path; search backwards by / or \)
     printat(0, 0, &format!("{}{} ({} x {})", if data.unsaved { "*" } else { "" }, data.file_path, data.bounds().0, data.bounds().1), stdout)?;
     printat(0, 1, "----", stdout)?;
 
@@ -93,11 +94,13 @@ pub fn render(config: &mut configdata::ConfigData, data: &sheetdata::SheetData, 
     printat(0, (vbottom - vtop + 3) as u16, "----", stdout)?;
 
     if data.selected.is_some() && data.selected_cell_value().is_some() {
-        let selectedstr = format!("({}, {}): {}", data.selected.unwrap().0, data.selected.unwrap().1, data.selected_cell_value().unwrap());
+        let selectedstr = format!("({}, {}):", data.selected.unwrap().0, data.selected.unwrap().1);
         printat(0, (vbottom - vtop + 4) as u16, &selectedstr, stdout)?;
+        printat(15, (vbottom - vtop + 4) as u16, &format!("{}", data.selected_cell_value().unwrap()), stdout)?;
     } else {
         printat(0, (vbottom - vtop + 4) as u16, "no cell selected", stdout)?;
     }
+    printat(0, 2, "", stdout)?;
 
     // Flush the buffer to finish
     flush(stdout)?;
