@@ -73,6 +73,8 @@ Delete the currently selected row or column (ex. `d c` -> delete the current col
 - `insert`/`o`/`i` (`"row"`/`"r"` or `"column"`/`"c"`) -
 Insert ("open") a new row or column before the currently selected row or column (ex. `o c` -> insert a new column)
 
+- `sort` - Sort the currently selected column
+
 <!-- TODO: undo commands, undo tree? -->
 
 ## Keybinds (while editing)

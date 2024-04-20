@@ -49,6 +49,9 @@ pub fn printstyl(x: u16, y: u16, contents: StyledContent<String>, stdout: &mut i
     io::Result::Ok(())
 }
 
+/// Purge the screen
+// TODO: impl this (to separate Purge from Clear, for perf.)
+
 /// Clear the screen
 pub fn clear(stdout: &mut io::Stdout) -> io::Result<()> {
     execute!(stdout, terminal::Clear(terminal::ClearType::Purge))?;

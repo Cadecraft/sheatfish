@@ -20,6 +20,7 @@ TODOS:
     - Zoom features
     - Rerender after commands like save, delete, etc.
     - Refactor the main file
+    - Performance lag in large window
 */
 
 /// Main function
@@ -27,33 +28,20 @@ fn main() -> io::Result<()> {
     // Initialize REM, introductions
     let rem = remdata::RemData::new(
         "0.2.0",
-        "2024/04/11",
+        "2024/04/13",
         true
     );
     // First, enable raw mode and create the stdout
     let mut stdout = io::stdout();
     set_raw_mode(true)?;
-    //terminal::enable_raw_mode().expect("ERR: Crossterm could not enable Raw Mode");
     clear(&mut stdout)?;
     printat(0, 0, "SHEATFISH by Cadecraft", &mut stdout)?;
     printat(0, 1, &rem.fmt(false), &mut stdout)?;
     printat(0, 2, "====", &mut stdout)?;
-    /*queue!(stdout, cursor::MoveTo(0,0), style::PrintStyledContent("SHEATFISH by Cadecraft".reset()))?;
-    println!("SHEATFISH by Cadecraft");
-    println!("{}", rem.fmt(false));
-    println!("====");
-    println!();*/
 
     // Initialize data
     let mut config = configdata::ConfigData::new();
     let mut data = sheetdata::SheetData::new();
-
-    // Dbg: load a testing vector/file
-    /*data.load_vector(&vec![
-        vec!["xasdfasdfsfs".to_string(), "yaa".to_string(), "z".to_string(), "more".to_string()],
-        vec!["u".to_string(), "v".to_string(), "w".to_string(), "even".to_string(), "mas".to_string()],
-        vec!["end".to_string()]
-    ]);*/
 
     // Load a blank default vector
     data.load_vector(&vec![vec!["".to_string(); 16]; 16]);
@@ -109,6 +97,12 @@ fn main() -> io::Result<()> {
                     "config" => {
                         // Display all the config items
                         println!("{}", config.display());
+                    },
+                    "sort" => {
+                        // Sort
+                        data.sort_column(data.selected.unwrap_or((0, 0)).1);
+                        // Start control cycle
+                        control_cycle(&mut config, &mut data, &mut stdout)?;
                     },
                     _ => {
                         println!("Unknown command."); // todo: refactor unknown ?
@@ -305,7 +299,6 @@ fn control_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::Shee
                         if insertmode {
                             // Insert this character
                             inputword.push(c);
-                            // TODO: impl this in the other cases, and in the case of 'inserting' into a cell (test with simple keybind mode)
                             print_input_word(config, data, stdout, &inputword)?;
                             endinput = false;
                         } else {

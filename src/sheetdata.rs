@@ -216,4 +216,24 @@ impl SheetData {
         self.unsaved = true; // Was modified
         true
     }
+    /// Sort a column at a coordinate
+    pub fn sort_column(&mut self, colcoord: usize) -> bool {
+        // TODO: impl sort range and number-based sort
+        if colcoord >= self.bounds().1 {
+            return false;
+        }
+        let mut thiscol: Vec<String> = Vec::new();
+        for row in &mut self.sheet {
+            if colcoord >= row.len() {
+                // TODO: err
+                return false; // Cannot sort when not rectangular
+            }
+            thiscol.push(row[colcoord].clone());
+        }
+        thiscol.sort();
+        for (i, row) in &mut self.sheet.iter_mut().enumerate() {
+            row[colcoord] = thiscol[i].clone();
+        }
+        true
+    }
 }
