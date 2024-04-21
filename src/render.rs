@@ -39,6 +39,7 @@ pub fn render(config: &mut configdata::ConfigData, data: &sheetdata::SheetData, 
     let vtop: usize = cmp::max(selectedcoords.0.saturating_sub(viewheight / 2), 0);
     let vbottom: usize = cmp::min(vtop + viewheight, data.bounds().0);
 
+    // Get config info
     let maxcellwidth: u16 = config.get_value("maxcellwidth").unwrap_or(5).try_into().unwrap_or(5);
 
     // Render row and column titles
@@ -89,7 +90,7 @@ pub fn render(config: &mut configdata::ConfigData, data: &sheetdata::SheetData, 
         }
     }
 
-    // TODO: put cursor on the cell
+    // TODO: put cursor on the cell ?
 
     printat(0, (vbottom - vtop + 3) as u16, "----", stdout)?;
 

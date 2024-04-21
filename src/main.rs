@@ -71,7 +71,7 @@ fn main() -> io::Result<()> {
                 match command[0].trim() {
                     "quit" | "q" => {
                         // Quit
-                        // TODO: quit confirmation if unsaved (cancel with '!')
+                        // TODO: quit confirmation if unsaved and NOT "generated_file" (cancel with '!')
                         break;
                     },
                     "edit" | "e" => {
@@ -81,12 +81,14 @@ fn main() -> io::Result<()> {
                     },
                     "new" => {
                         // New file: load a blank default vector
+                        // TODO: quit confirmation if unsaved (cancel with '!')
                         data.load_vector(&vec![vec!["".to_string(); 16]; 16]);
                         // Start control cycle
                         control_cycle(&mut config, &mut data, &mut stdout)?;
                     },
                     "save" | "w" => {
                         // Save the file to the same path, if possible
+                        // TODO: override not-saving-if-unedited with '!'
                         let save_success = data.save_file(&data.file_path.clone());
                         if !save_success {
                             println!("Error saving file.");
@@ -113,6 +115,7 @@ fn main() -> io::Result<()> {
                 match command[0].trim() {
                     "open" | "e" => {
                         // Load the file
+                        // TODO: quit confirmation if unsaved (cancel with '!')
                         let load_success = data.load_file(command[1].trim());
                         if !load_success {
                             println!("Error opening file.");
@@ -173,7 +176,7 @@ fn main() -> io::Result<()> {
             3 => {
                 match command[0].trim() {
                     // TODO: row/column deletion, insertion, etc. with key repeating -->
-                    "nav" => {
+                    "nav" | "g" => {
                         // Navigate to a cell (command[2], command[1])
                         data.set_selected_coords((command[2].parse().unwrap_or(0), command[1].parse().unwrap_or(0)));
                         // Start the control cycle
@@ -182,6 +185,12 @@ fn main() -> io::Result<()> {
                     "config" => {
                         // Set a config to a value
                         config.set_value(command[1], command[2].parse().unwrap_or(2));
+                    },
+                    "sort" => {
+                        // Sort column over region command[1]..=command[2]
+                        data.sort_column_bounded(data.selected.unwrap_or((0, 0)).1, command[1].parse().unwrap_or(0), command[2].parse().unwrap_or(data.bounds().0 - 1));
+                        // Start control cycle
+                        control_cycle(&mut config, &mut data, &mut stdout)?;
                     }
                     _ => {
                         println!("Unknown command.");

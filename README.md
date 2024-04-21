@@ -38,9 +38,11 @@ demo_file.csv (10 x 9)
 1. Download this source code
 2. Build using `cargo`
 
+Executable binaries will be added to a release eventually.
+
 ## Commands (in command prompt)
 
-System
+### System
 
 - `quit`/`q` -
 Quit
@@ -62,9 +64,9 @@ Set a config key (see below)
 - `config` -
 See all config keys (see below)
 
-Editing
+### Editing
 
-- `nav {column #} {row #}` -
+- `nav {column #} {row #}`/`g {column #} {row #}` -
 Navigate to the cell at a coordinate
 
 - `delete`/`d` (`"row"`/`"r"` or `"column"`/`"c"`) -
@@ -73,7 +75,13 @@ Delete the currently selected row or column (ex. `d c` -> delete the current col
 - `insert`/`o`/`i` (`"row"`/`"r"` or `"column"`/`"c"`) -
 Insert ("open") a new row or column before the currently selected row or column (ex. `o c` -> insert a new column)
 
-- `sort` - Sort the currently selected column
+- `sort` -
+Sort the currently selected column
+<!-- TODO: options for backwards, row sort, from cell->cell, sort multiple rows by a column, etc. -->
+<!-- TODO: numeric sort -->
+
+- `sort {row start} {row end}` -
+Sort the currently selected column over the bounds from row start to row end, inclusive
 
 <!-- TODO: undo commands, undo tree? -->
 
@@ -116,11 +124,12 @@ Delete the last character of the new value, or clear the current cell if there i
 
 - `[x]` - Delete the value in the cell
 
-- `[o] [c]` - Insert ("open") a column at the current selection
+- `[o] [c]` - Insert ("open") a column left of the current selection
 
 <!-- TODO: support backspace key -->
 
-- `[o] [r]`/`[o] [o]` - Insert ("open") a row at the current selection
+- `[o] [r]`/`[o] [o]` - Insert ("open") a row above the current selection
+<!-- TODO: command to insert below -->
 
 - `[d] [c]` - Delete the currently selected column
 

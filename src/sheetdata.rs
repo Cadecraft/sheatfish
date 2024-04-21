@@ -218,22 +218,27 @@ impl SheetData {
     }
     /// Sort a column at a coordinate
     pub fn sort_column(&mut self, colcoord: usize) -> bool {
+        self.sort_column_bounded(colcoord, 0, self.bounds().0 - 1)
+    }
+    /// Sort the region of a column from rowstart to rowend, inclusive
+    pub fn sort_column_bounded(&mut self, colcoord: usize, rowstart: usize, rowend: usize) -> bool {
         // TODO: impl sort range and number-based sort
-        if colcoord >= self.bounds().1 {
+        if colcoord >= self.bounds().1 || rowstart > rowend || rowend >= self.bounds().0 {
             return false;
         }
-        let mut thiscol: Vec<String> = Vec::new();
-        for row in &mut self.sheet {
+        let mut thisregion: Vec<String> = Vec::new();
+        for row in &mut self.sheet[rowstart..=rowend] {
             if colcoord >= row.len() {
                 // TODO: err
                 return false; // Cannot sort when not rectangular
             }
-            thiscol.push(row[colcoord].clone());
+            thisregion.push(row[colcoord].clone());
         }
-        thiscol.sort();
-        for (i, row) in &mut self.sheet.iter_mut().enumerate() {
-            row[colcoord] = thiscol[i].clone();
+        thisregion.sort();
+        for (i, row) in &mut self.sheet[rowstart..=rowend].iter_mut().enumerate() {
+            row[colcoord] = thisregion[i].clone();
         }
+        self.unsaved = true; // Was modified
         true
     }
 }
