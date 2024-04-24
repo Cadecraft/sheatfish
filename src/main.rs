@@ -167,7 +167,7 @@ fn main() -> io::Result<()> {
                                 println!("Unknown command.");
                             }
                         }
-                    }
+                    },
                     _ => {
                         println!("Unknown command.");
                     }
@@ -191,7 +191,31 @@ fn main() -> io::Result<()> {
                         data.sort_column_bounded(data.selected.unwrap_or((0, 0)).1, command[1].parse().unwrap_or(0), command[2].parse().unwrap_or(data.bounds().0 - 1));
                         // Start control cycle
                         control_cycle(&mut config, &mut data, &mut stdout)?;
-                    }
+                    },
+                    "insert" | "o" | "i" => {
+                        match command[2].trim() {
+                            "post" | "p" => {
+                                match command[1].trim() {
+                                    "row" | "r" => {
+                                        data.insert_row(data.selected.unwrap_or((0, 0)).0 + 1);
+                                        // Start control cycle
+                                        control_cycle(&mut config, &mut data, &mut stdout)?;
+                                    },
+                                    "column" | "col" | "c" => {
+                                        data.insert_column(data.selected.unwrap_or((0, 0)).1 + 1);
+                                        // Start control cycle
+                                        control_cycle(&mut config, &mut data, &mut stdout)?;
+                                    },
+                                    _ => {
+                                        println!("Unknown command.");
+                                    }
+                                }
+                            },
+                            _ => {
+                                println!("Unknown command.");
+                            }
+                        }
+                    },
                     _ => {
                         println!("Unknown command.");
                     }
@@ -347,11 +371,17 @@ fn control_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::Shee
                                     }
                                 },
                                 'c' if priorcapture == 'o' => {
-                                    // Insert a column
+                                    // Insert a column left
                                     for _i in 0..real_repeat_times {
                                         data.insert_column(data.selected.unwrap_or((0, 0)).1);
                                     }
                                 },
+                                'C' if priorcapture == 'o' => {
+                                    // Insert a column right
+                                    for _i in 0..real_repeat_times {
+                                        data.insert_column(data.selected.unwrap_or((0, 0)).1 + 1);
+                                    }
+                                }
                                 'd' | 'r' if priorcapture == 'd' => {
                                     // Delete a row
                                     for _i in 0..real_repeat_times {
@@ -359,9 +389,15 @@ fn control_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::Shee
                                     }
                                 },
                                 'o' | 'r' if priorcapture == 'o' => {
-                                    // Insert a row
+                                    // Insert a row left
                                     for _i in 0..real_repeat_times {
                                         data.insert_row(data.selected.unwrap_or((0, 0)).0);
+                                    }
+                                },
+                                'O' | 'R' if priorcapture == 'o' => {
+                                    // Insert a row right
+                                    for _i in 0..real_repeat_times {
+                                        data.insert_row(data.selected.unwrap_or((0, 0)).0 + 1);
                                     }
                                 },
                                 'c' | 'i' => {

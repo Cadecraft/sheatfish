@@ -69,11 +69,13 @@ See all config keys (see below)
 - `nav {column #} {row #}`/`g {column #} {row #}` -
 Navigate to the cell at a coordinate
 
+<!-- TODO: options for inserting after instead of before -->
 - `delete`/`d` (`"row"`/`"r"` or `"column"`/`"c"`) -
 Delete the currently selected row or column (ex. `d c` -> delete the current column)
 
-- `insert`/`o`/`i` (`"row"`/`"r"` or `"column"`/`"c"`) -
-Insert ("open") a new row or column before the currently selected row or column (ex. `o c` -> insert a new column)
+- `insert`/`o`/`i` (`"row"`/`"r"` or `"column"`/`"c"`) (optional: `post`/`p`)-
+Insert ("open") a new row or column before (or after with `post`) the currently selected row or column (ex. `o c` -> insert a new column)
+<!-- TODO: more ergonomic command? -->
 
 - `sort` -
 Sort the currently selected column
@@ -126,16 +128,21 @@ Delete the last character of the new value, or clear the current cell if there i
 
 - `[o] [c]` - Insert ("open") a column left of the current selection
 
+- `[o] [C]` - Insert ("open") a column right of the current selection
+
 <!-- TODO: support backspace key -->
 
 - `[o] [r]`/`[o] [o]` - Insert ("open") a row above the current selection
-<!-- TODO: command to insert below -->
+
+- `[o] [R]`/`[o] [O]` - Insert ("open") a row below the current selection
 
 - `[d] [c]` - Delete the currently selected column
 
 - `[d] [r]`/`[d] [d]` - Delete a row at the current selection
 
 - `[0]`-`[9]` - Repeat the action (navigation) n times (repeat to type whole numbers, ex. `[2][5][j]` -> move down 25 cells, `[4][d][d]` -> delete 4 rows)
+
+<!-- TODO: undo feature -->
 
 ## Config
 

@@ -195,7 +195,7 @@ impl SheetData {
     }
     /// Insert a row at a coordinate
     pub fn insert_row(&mut self, rowcoord: usize) -> bool {
-        if rowcoord >= self.bounds().0 {
+        if rowcoord > self.bounds().0 {
             return false;
         }
         self.sheet.insert(rowcoord, vec![String::new(); self.bounds().1]);
@@ -204,11 +204,11 @@ impl SheetData {
     }
     /// Insert a column at a coordinate
     pub fn insert_column(&mut self, colcoord: usize) -> bool {
-        if colcoord >= self.bounds().1 {
+        if colcoord > self.bounds().1 {
             return false;
         }
         for row in &mut self.sheet {
-            if colcoord >= row.len() {
+            if colcoord > row.len() {
                 continue;
             }
             row.insert(colcoord, String::new());
