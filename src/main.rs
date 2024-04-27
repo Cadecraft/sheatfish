@@ -61,19 +61,33 @@ fn main() -> io::Result<()> {
 
         set_raw_mode(false)?;
         //terminal::disable_raw_mode().expect("ERR: Crossterm could not disable Raw Mode");
-        // todo: command class
+        // todo: refactor: command class
         let mut uin = String::new();
         std::io::stdin().read_line(&mut uin).expect("Failed to read line");
-        let command: Vec<&str> = uin.trim().split(' ').collect();
-        // TODO: ignore a : at the start of a command (vim thing)
+        let mut command: Vec<&str> = uin.trim().split(' ').collect();
+        // Remove leading ':' (for vim users)
+        if command.len() > 0 && command[0].starts_with(":") {
+            command[0] = command[0].strip_prefix(':').unwrap_or(command[0]);
+        }
         match command.len() {
             1 => {
                 match command[0].trim() {
                     "quit" | "q" => {
                         // Quit
                         // TODO: quit confirmation if unsaved and NOT "generated_file" (cancel with '!')
-                        break;
+                        if data.unsaved {
+                            // Quit confirmation
+                            println!("You have unsaved changes.");
+                            println!("If you want to print without saving, use \"quit!\" or \"q!\" instead");
+                        } else {
+                            // Able to quit
+                            break;
+                        }
                     },
+                    "quit!" | "q!" => {
+                        // Force quit
+                        break;
+                    }
                     "edit" | "e" => {
                         // Back to editing the file
                         // Start control cycle
@@ -175,7 +189,6 @@ fn main() -> io::Result<()> {
             },
             3 => {
                 match command[0].trim() {
-                    // TODO: row/column deletion, insertion, etc. with key repeating -->
                     "nav" | "g" => {
                         // Navigate to a cell (command[2], command[1])
                         data.set_selected_coords((command[2].parse().unwrap_or(0), command[1].parse().unwrap_or(0)));

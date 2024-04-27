@@ -47,6 +47,9 @@ Executable binaries will be added to a release eventually.
 - `quit`/`q` -
 Quit
 
+- `quit!`/`q!` -
+Force quit (discards unsaved changes)
+
 - `edit`/`e` -
 Exit the command prompt (return to editing a file)
 
@@ -69,7 +72,6 @@ See all config keys (see below)
 - `nav {column #} {row #}`/`g {column #} {row #}` -
 Navigate to the cell at a coordinate
 
-<!-- TODO: options for inserting after instead of before -->
 - `delete`/`d` (`"row"`/`"r"` or `"column"`/`"c"`) -
 Delete the currently selected row or column (ex. `d c` -> delete the current column)
 
@@ -86,6 +88,7 @@ Sort the currently selected column
 Sort the currently selected column over the bounds from row start to row end, inclusive
 
 <!-- TODO: undo commands, undo tree? -->
+<!-- TODO: allow ANY vim command sequence to be typed in to the commands?? -->
 
 ## Keybinds (while editing)
 

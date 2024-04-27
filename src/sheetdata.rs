@@ -85,8 +85,8 @@ impl SheetData {
     pub fn load_vector(&mut self, newsheet: &Vec<Vec<String>>) {
         self.file_path = "generated_file".to_string();
         self.sheet = newsheet.clone();
-        // So far, the file is unsaved
-        self.unsaved = true;
+        // So far, treat the file as saved (to avoid user issues)
+        self.unsaved = false;
         self.selected = None;
     }
     /// Save to a file, return whether successful
