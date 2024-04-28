@@ -1,10 +1,11 @@
-use std::fs;
-use std::cmp;
+use std::{ fs, cmp, collections::VecDeque };
+use crate::configdata::ConfigData;
 
 /// Stores the data for the sheet
 pub struct SheetData {
     pub file_path: String,
     sheet: Vec<Vec<String>>,
+    history: VecDeque<Vec<Vec<String>>>, // Stack of prior sheet states
     pub selected: Option<(usize, usize)>, // (y, x)
     pub unsaved: bool
 }
@@ -14,6 +15,7 @@ impl SheetData {
         SheetData {
             file_path: "new_file".to_string(),
             sheet: Vec::new(),
+            history: VecDeque::new(),
             selected: Some((0, 0)),
             unsaved: true
         }
@@ -37,6 +39,39 @@ impl SheetData {
         }
         Some(&self.sheet[coords.0][coords.1])
     }
+    /// Clear the sheet state
+    /// (reset all history; call this everywhere where the sheet is reset BEFORE resetting it)
+    fn clear_sheet_state(&mut self) {
+        self.sheet.clear();
+        self.history.clear();
+        self.unsaved = false;
+        self.selected = None;
+        // TODO: call this everywhere where sheet is reset to a vector or loaded
+    }
+    /// Update a sheet state
+    /// (set to unsaved and add in the history; call this everywhere the sheet is changed BEFORE making the change)
+    fn update_sheet_state(&mut self, config: &ConfigData) {
+        // TODO: call this everywhere where sheet is changed BEFORE making the change (for history to update right)
+        self.unsaved = true;
+        self.history.push_back(self.sheet.clone());
+        if self.history.len() > config.get_value("historysize").unwrap_or(10).try_into().unwrap_or(0) {
+            // Delete from the front
+            self.history.pop_front();
+        }
+    }
+    /// Undo (pop from the history) and return whether successful
+    pub fn undo(&mut self) -> bool {
+        match self.history.pop_back() {
+            None => {
+                false
+            },
+            Some(thissheet) => {
+                self.sheet = thissheet.clone();
+                true
+            }
+        }
+        // TODO: impl better: selection out of bounds?
+    }
     /// Load a file, return whether successful
     pub fn load_file(&mut self, path: &str) -> bool {
         self.file_path = path.to_string();
@@ -48,7 +83,7 @@ impl SheetData {
         let res = read_res.unwrap().replace("\r\n", "\n").replace("\r", "\n");
         // Update the sheet by parsing res
         // todo: comma/quote handling
-        self.sheet.clear();
+        self.clear_sheet_state(); // TODO: test
         let mut bound_width: usize = 0;
         for resline in res.split('\n') {
             if resline.trim().is_empty() {
@@ -75,19 +110,14 @@ impl SheetData {
                 line.push(String::new());
             }
         }
-        // So far, the file is "saved" (may be modified by loading, but saving should do nothing currently)
-        self.unsaved = false;
-        self.selected = None;
         // Success
         true
     }
     /// Load a vector literal
     pub fn load_vector(&mut self, newsheet: &Vec<Vec<String>>) {
         self.file_path = "generated_file".to_string();
+        self.clear_sheet_state(); // TODO: test
         self.sheet = newsheet.clone();
-        // So far, treat the file as saved (to avoid user issues)
-        self.unsaved = false;
-        self.selected = None;
     }
     /// Save to a file, return whether successful
     pub fn save_file(&mut self, path: &str) -> bool {
@@ -146,22 +176,23 @@ impl SheetData {
         self.cell(self.selected.unwrap())
     }
     /// Set the value of a cell
-    pub fn set_cell_value(&mut self, coords: (usize, usize), newval: String) {
+    pub fn set_cell_value(&mut self, coords: (usize, usize), newval: String, config: &ConfigData) {
+        self.update_sheet_state(config);
         if !self.in_bounds(coords) {
             return;
         }
         self.sheet[coords.0][coords.1] = newval;
-        self.unsaved = true; // Was modified
     }
     /// Set the value of the selected cell
-    pub fn set_selected_cell_value(&mut self, newval: String) {
+    pub fn set_selected_cell_value(&mut self, newval: String, config: &ConfigData) {
         if self.selected.is_none() {
             return;
         }
-        self.set_cell_value(self.selected.unwrap(), newval);
+        self.set_cell_value(self.selected.unwrap(), newval, config);
     }
     /// Delete a row at a coordinate
-    pub fn delete_row(&mut self, rowcoord: usize) -> bool {
+    pub fn delete_row(&mut self, rowcoord: usize, config: &ConfigData) -> bool {
+        self.update_sheet_state(config);
         if rowcoord >= self.bounds().0 || self.bounds().0 <= 1 {
             return false;
         }
@@ -171,11 +202,11 @@ impl SheetData {
                 self.selected = Some((row - 1, col));
             }
         }
-        self.unsaved = true; // Was modified
         true
     }
     /// Delete a column at a coordinate
-    pub fn delete_column(&mut self, colcoord: usize) -> bool {
+    pub fn delete_column(&mut self, colcoord: usize, config: &ConfigData) -> bool {
+        self.update_sheet_state(config);
         if colcoord >= self.bounds().1 || self.bounds().1 <= 1 {
             return false;
         }
@@ -190,20 +221,20 @@ impl SheetData {
                 self.selected = Some((row, col - 1));
             }
         }
-        self.unsaved = true; // Was modified
         true
     }
     /// Insert a row at a coordinate
-    pub fn insert_row(&mut self, rowcoord: usize) -> bool {
+    pub fn insert_row(&mut self, rowcoord: usize, config: &ConfigData) -> bool {
+        self.update_sheet_state(config);
         if rowcoord > self.bounds().0 {
             return false;
         }
         self.sheet.insert(rowcoord, vec![String::new(); self.bounds().1]);
-        self.unsaved = true; // Was modified
         true
     }
     /// Insert a column at a coordinate
-    pub fn insert_column(&mut self, colcoord: usize) -> bool {
+    pub fn insert_column(&mut self, colcoord: usize, config: &ConfigData) -> bool {
+        self.update_sheet_state(config);
         if colcoord > self.bounds().1 {
             return false;
         }
@@ -213,15 +244,15 @@ impl SheetData {
             }
             row.insert(colcoord, String::new());
         }
-        self.unsaved = true; // Was modified
         true
     }
     /// Sort a column at a coordinate
-    pub fn sort_column(&mut self, colcoord: usize) -> bool {
-        self.sort_column_bounded(colcoord, 0, self.bounds().0 - 1)
+    pub fn sort_column(&mut self, colcoord: usize, config: &ConfigData) -> bool {
+        self.sort_column_bounded(colcoord, 0, self.bounds().0 - 1, config)
     }
     /// Sort the region of a column from rowstart to rowend, inclusive
-    pub fn sort_column_bounded(&mut self, colcoord: usize, rowstart: usize, rowend: usize) -> bool {
+    pub fn sort_column_bounded(&mut self, colcoord: usize, rowstart: usize, rowend: usize, config: &ConfigData) -> bool {
+        self.update_sheet_state(config);
         // TODO: impl sort range and number-based sort
         if colcoord >= self.bounds().1 || rowstart > rowend || rowend >= self.bounds().0 {
             return false;
@@ -238,7 +269,6 @@ impl SheetData {
         for (i, row) in &mut self.sheet[rowstart..=rowend].iter_mut().enumerate() {
             row[colcoord] = thisregion[i].clone();
         }
-        self.unsaved = true; // Was modified
         true
     }
 }

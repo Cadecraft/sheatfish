@@ -74,7 +74,6 @@ fn main() -> io::Result<()> {
                 match command[0].trim() {
                     "quit" | "q" => {
                         // Quit
-                        // TODO: quit confirmation if unsaved and NOT "generated_file" (cancel with '!')
                         if data.unsaved {
                             // Quit confirmation
                             println!("You have unsaved changes.");
@@ -95,7 +94,7 @@ fn main() -> io::Result<()> {
                     },
                     "new" => {
                         // New file: load a blank default vector
-                        // TODO: quit confirmation if unsaved (cancel with '!')
+                        // TODO: implement the same confirmation system if unsaved as with `quit` (cancel with '!')
                         data.load_vector(&vec![vec!["".to_string(); 16]; 16]);
                         // Start control cycle
                         control_cycle(&mut config, &mut data, &mut stdout)?;
@@ -116,10 +115,16 @@ fn main() -> io::Result<()> {
                     },
                     "sort" => {
                         // Sort
-                        data.sort_column(data.selected.unwrap_or((0, 0)).1);
+                        data.sort_column(data.selected.unwrap_or((0, 0)).1, &config);
                         // Start control cycle
                         control_cycle(&mut config, &mut data, &mut stdout)?;
                     },
+                    "undo" | "u" => {
+                        // Undo
+                        data.undo();
+                        // Start control cycle
+                        control_cycle(&mut config, &mut data, &mut stdout)?;
+                    }
                     _ => {
                         println!("Unknown command."); // todo: refactor unknown ?
                     }
@@ -151,12 +156,12 @@ fn main() -> io::Result<()> {
                     "delete" | "d" => {
                         match command[1].trim() {
                             "row" | "r" => {
-                                data.delete_row(data.selected.unwrap_or((0, 0)).0);
+                                data.delete_row(data.selected.unwrap_or((0, 0)).0, &config);
                                 // Start control cycle
                                 control_cycle(&mut config, &mut data, &mut stdout)?;
                             },
                             "column" | "col" | "c" => {
-                                data.delete_column(data.selected.unwrap_or((0, 0)).1);
+                                data.delete_column(data.selected.unwrap_or((0, 0)).1, &config);
                                 // Start control cycle
                                 control_cycle(&mut config, &mut data, &mut stdout)?;
                             },
@@ -168,12 +173,12 @@ fn main() -> io::Result<()> {
                     "insert" | "o" | "i" => {
                         match command[1].trim() {
                             "row" | "r" => {
-                                data.insert_row(data.selected.unwrap_or((0, 0)).0);
+                                data.insert_row(data.selected.unwrap_or((0, 0)).0, &config);
                                 // Start control cycle
                                 control_cycle(&mut config, &mut data, &mut stdout)?;
                             },
                             "column" | "col" | "c" => {
-                                data.insert_column(data.selected.unwrap_or((0, 0)).1);
+                                data.insert_column(data.selected.unwrap_or((0, 0)).1, &config);
                                 // Start control cycle
                                 control_cycle(&mut config, &mut data, &mut stdout)?;
                             },
@@ -198,10 +203,12 @@ fn main() -> io::Result<()> {
                     "config" => {
                         // Set a config to a value
                         config.set_value(command[1], command[2].parse().unwrap_or(2));
+                        // Display all the config items
+                        println!("{}", config.display()); // TODO: CLEAR WHILE PRINTING (ex. prevent historysize: 10 -> 9 show as 90)
                     },
                     "sort" => {
                         // Sort column over region command[1]..=command[2]
-                        data.sort_column_bounded(data.selected.unwrap_or((0, 0)).1, command[1].parse().unwrap_or(0), command[2].parse().unwrap_or(data.bounds().0 - 1));
+                        data.sort_column_bounded(data.selected.unwrap_or((0, 0)).1, command[1].parse().unwrap_or(0), command[2].parse().unwrap_or(data.bounds().0 - 1), &config);
                         // Start control cycle
                         control_cycle(&mut config, &mut data, &mut stdout)?;
                     },
@@ -210,12 +217,12 @@ fn main() -> io::Result<()> {
                             "post" | "p" => {
                                 match command[1].trim() {
                                     "row" | "r" => {
-                                        data.insert_row(data.selected.unwrap_or((0, 0)).0 + 1);
+                                        data.insert_row(data.selected.unwrap_or((0, 0)).0 + 1, &config);
                                         // Start control cycle
                                         control_cycle(&mut config, &mut data, &mut stdout)?;
                                     },
                                     "column" | "col" | "c" => {
-                                        data.insert_column(data.selected.unwrap_or((0, 0)).1 + 1);
+                                        data.insert_column(data.selected.unwrap_or((0, 0)).1 + 1, &config);
                                         // Start control cycle
                                         control_cycle(&mut config, &mut data, &mut stdout)?;
                                     },
@@ -290,14 +297,14 @@ fn control_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::Shee
                             print!("<");
                             endinput = false;
                         } else {
-                            data.set_selected_cell_value(String::new()); // Cleared; rerender
+                            data.set_selected_cell_value(String::new(), &config); // Cleared; rerender
                         }
                     }
                     crossterm::event::KeyCode::Enter => {
                         // Enter the data if it exists, then move down
                         if !inputword.is_empty() {
                             // Already typed a word: enter it and move down
-                            data.set_selected_cell_value(inputword.clone());
+                            data.set_selected_cell_value(inputword.clone(), &config);
                             data.move_selected_coords((1, 0));
                         } else {
                             // Did not type a word yet
@@ -334,7 +341,7 @@ fn control_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::Shee
                     crossterm::event::KeyCode::Esc => {
                         if insertmode {
                             // Exit insert mode, saving changes to the cell if needed
-                            data.set_selected_cell_value(inputword.clone());
+                            data.set_selected_cell_value(inputword.clone(), &config);
                             inputword.clear();
                             insertmode = false;
                             endinput = true;
@@ -359,7 +366,7 @@ fn control_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::Shee
                                 'j' => data.move_selected_coords((real_repeat_times, 0)),
                                 'k' => data.move_selected_coords((-1 * real_repeat_times, 0)),
                                 'l' => data.move_selected_coords((0, real_repeat_times)),
-                                'x' => data.set_selected_cell_value(String::new()), // Cleared; rerender
+                                'x' => data.set_selected_cell_value(String::new(), &config), // Cleared; rerender
                                 'd' | 'o' if priorcapture != 'd' && priorcapture != 'o' => {
                                     // Delete or open: followed by a 'c', 'd', 'o', or 'r', so do not exit yet
                                     priorcapture = c;
@@ -380,37 +387,37 @@ fn control_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::Shee
                                 'c' if priorcapture == 'd' => {
                                     // Delete a column
                                     for _i in 0..real_repeat_times {
-                                        data.delete_column(data.selected.unwrap_or((0, 0)).1);
+                                        data.delete_column(data.selected.unwrap_or((0, 0)).1, &config);
                                     }
                                 },
                                 'c' if priorcapture == 'o' => {
                                     // Insert a column left
                                     for _i in 0..real_repeat_times {
-                                        data.insert_column(data.selected.unwrap_or((0, 0)).1);
+                                        data.insert_column(data.selected.unwrap_or((0, 0)).1, &config);
                                     }
                                 },
                                 'C' if priorcapture == 'o' => {
                                     // Insert a column right
                                     for _i in 0..real_repeat_times {
-                                        data.insert_column(data.selected.unwrap_or((0, 0)).1 + 1);
+                                        data.insert_column(data.selected.unwrap_or((0, 0)).1 + 1, &config);
                                     }
                                 }
                                 'd' | 'r' if priorcapture == 'd' => {
                                     // Delete a row
                                     for _i in 0..real_repeat_times {
-                                        data.delete_row(data.selected.unwrap_or((0, 0)).0);
+                                        data.delete_row(data.selected.unwrap_or((0, 0)).0, &config);
                                     }
                                 },
                                 'o' | 'r' if priorcapture == 'o' => {
                                     // Insert a row left
                                     for _i in 0..real_repeat_times {
-                                        data.insert_row(data.selected.unwrap_or((0, 0)).0);
+                                        data.insert_row(data.selected.unwrap_or((0, 0)).0, &config);
                                     }
                                 },
                                 'O' | 'R' if priorcapture == 'o' => {
                                     // Insert a row right
                                     for _i in 0..real_repeat_times {
-                                        data.insert_row(data.selected.unwrap_or((0, 0)).0 + 1);
+                                        data.insert_row(data.selected.unwrap_or((0, 0)).0 + 1, &config);
                                     }
                                 },
                                 'c' | 'i' => {
@@ -421,6 +428,12 @@ fn control_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::Shee
                                         print_input_word(config, data, stdout, &inputword)?;
                                         endinput = false;
                                         insertmode = true;
+                                    }
+                                },
+                                'u' => {
+                                    // Undo the last action
+                                    for _i in 0..real_repeat_times {
+                                        data.undo();
                                     }
                                 },
                                 '0'..='9' => {

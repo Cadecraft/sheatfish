@@ -75,7 +75,7 @@ Navigate to the cell at a coordinate
 - `delete`/`d` (`"row"`/`"r"` or `"column"`/`"c"`) -
 Delete the currently selected row or column (ex. `d c` -> delete the current column)
 
-- `insert`/`o`/`i` (`"row"`/`"r"` or `"column"`/`"c"`) (optional: `post`/`p`)-
+- `insert`/`o`/`i` (`"row"`/`"r"` or `"column"`/`"c"`) (optional: `post`/`p`) -
 Insert ("open") a new row or column before (or after with `post`) the currently selected row or column (ex. `o c` -> insert a new column)
 <!-- TODO: more ergonomic command? -->
 
@@ -87,7 +87,10 @@ Sort the currently selected column
 - `sort {row start} {row end}` -
 Sort the currently selected column over the bounds from row start to row end, inclusive
 
-<!-- TODO: undo commands, undo tree? -->
+- `undo`/`u` -
+Undo the last action (see the `historysize` config option)
+
+<!-- TODO: undo tree? redo? -->
 <!-- TODO: allow ANY vim command sequence to be typed in to the commands?? -->
 
 ## Keybinds (while editing)
@@ -145,7 +148,9 @@ Delete the last character of the new value, or clear the current cell if there i
 
 - `[0]`-`[9]` - Repeat the action (navigation) n times (repeat to type whole numbers, ex. `[2][5][j]` -> move down 25 cells, `[4][d][d]` -> delete 4 rows)
 
-<!-- TODO: undo feature -->
+- `[u]` - Undo the last action
+
+<!-- TODO: redo feature -->
 
 ## Config
 
@@ -160,5 +165,8 @@ Max height of cells to show on screen at once before scrolling (integer from 1..
 
 - `vimmode` -
 Set to 1 to use the Vim Mode keybinds (see above) (integer from 0..=1, default 0)
+
+- `historysize` -
+Max number of prior states stored for the undo history (integer from 0.., default 10)
 
 <!-- TODO: config option to save files without trailing commas>
