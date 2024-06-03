@@ -90,7 +90,10 @@ Sort the currently selected column over the bounds from row start to row end, in
 - `undo`/`u` -
 Undo the last action (see the `historysize` config option)
 
-<!-- TODO: undo tree? redo? -->
+- `redo`/`r` -
+Redo the last undone action (see the `historysize` config option)
+
+<!-- TODO: undo tree? -->
 <!-- TODO: allow ANY vim command sequence to be typed in to the commands?? -->
 
 ## Keybinds (while editing)
@@ -150,7 +153,8 @@ Delete the last character of the new value, or clear the current cell if there i
 
 - `[u]` - Undo the last action
 
-<!-- TODO: redo feature -->
+<!-- TODO: test redo feature -->
+- `[r]` - Redo the last action
 
 ## Config
 

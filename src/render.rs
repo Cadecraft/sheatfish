@@ -26,7 +26,7 @@ pub fn render(config: &mut configdata::ConfigData, data: &sheetdata::SheetData, 
     clear(stdout)?;
 
     // Render sheet title and info
-    // TODO: print filename only (not full path; search backwards by / or \)
+    // TODO: print filename only (not full path; search backwards by / or \) ?
     printat(0, 0, &format!("{}{} ({} x {})", if data.unsaved { "*" } else { "" }, data.file_path, data.bounds().0, data.bounds().1), stdout)?;
     printat(0, 1, "----", stdout)?;
 
@@ -41,6 +41,9 @@ pub fn render(config: &mut configdata::ConfigData, data: &sheetdata::SheetData, 
 
     // Get config info
     let maxcellwidth: u16 = config.get_value("maxcellwidth").unwrap_or(5).try_into().unwrap_or(5);
+
+    // Render debug info
+    printstyl(70, 1, format!("dbg: len={}, curr={}", data.dbg_get_history_info().0, data.dbg_get_history_info().1).dark_cyan(), stdout)?;
 
     // Render row and column titles
     // TODO: more colors
@@ -73,7 +76,6 @@ pub fn render(config: &mut configdata::ConfigData, data: &sheetdata::SheetData, 
             // Render based on user selection
             if data.selected.is_some() && (row, col) == data.selected.unwrap() {
                 printstyl(
-                    // TODO: unwrap handling ?
                     ((maxcellwidth + 2) as usize * (col + 1 - vleft)).try_into().unwrap_or(0),
                     ((row + 3) - vtop).try_into().unwrap_or(0),
                     format!("[{}]", fmtval).cyan(),
@@ -89,8 +91,6 @@ pub fn render(config: &mut configdata::ConfigData, data: &sheetdata::SheetData, 
             }
         }
     }
-
-    // TODO: put cursor on the cell ?
 
     printat(0, (vbottom - vtop + 3) as u16, "----", stdout)?;
 

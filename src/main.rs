@@ -76,6 +76,10 @@ fn main() -> io::Result<()> {
                         // Quit
                         if data.unsaved {
                             // Quit confirmation
+                            for i in (1..8).rev() {
+                                printat(0, (vbottom - vtop + 5 + i) as u16, "                                                                                   ", &mut stdout)?;
+                            }
+                            printat(0, (vbottom - vtop + 6) as u16, "", &mut stdout)?; // TODO: heavy refactoring of this clear section (repeated a lot)
                             println!("You have unsaved changes.");
                             println!("If you want to print without saving, use \"quit!\" or \"q!\" instead");
                         } else {
@@ -104,13 +108,25 @@ fn main() -> io::Result<()> {
                         // TODO: override not-saving-if-unedited with '!'
                         let save_success = data.save_file(&data.file_path.clone());
                         if !save_success {
+                            for i in (1..8).rev() {
+                                printat(0, (vbottom - vtop + 5 + i) as u16, "                                                                                   ", &mut stdout)?;
+                            }
+                            printat(0, (vbottom - vtop + 6) as u16, "", &mut stdout)?;
                             println!("Error saving file.");
                         } else {
+                            for i in (1..8).rev() {
+                                printat(0, (vbottom - vtop + 5 + i) as u16, "                                                                                   ", &mut stdout)?;
+                            }
+                            printat(0, (vbottom - vtop + 6) as u16, "", &mut stdout)?;
                             println!("Saved file.");
                         }
                     },
                     "config" => {
                         // Display all the config items
+                        for i in (1..8).rev() {
+                            printat(0, (vbottom - vtop + 5 + i) as u16, "                                                                                   ", &mut stdout)?;
+                        }
+                        printat(0, (vbottom - vtop + 6) as u16, "", &mut stdout)?;
                         println!("{}", config.display());
                     },
                     "sort" => {
@@ -124,8 +140,18 @@ fn main() -> io::Result<()> {
                         data.undo();
                         // Start control cycle
                         control_cycle(&mut config, &mut data, &mut stdout)?;
-                    }
+                    },
+                    "redo" | "r" => {
+                        // Redo
+                        data.redo();
+                        // Start control cycle
+                        control_cycle(&mut config, &mut data, &mut stdout)?;
+                    },
                     _ => {
+                        for i in (1..8).rev() {
+                            printat(0, (vbottom - vtop + 5 + i) as u16, "                                                                                   ", &mut stdout)?;
+                        }
+                        printat(0, (vbottom - vtop + 6) as u16, "", &mut stdout)?;
                         println!("Unknown command."); // todo: refactor unknown ?
                     }
                 }
@@ -137,6 +163,10 @@ fn main() -> io::Result<()> {
                         // TODO: quit confirmation if unsaved (cancel with '!')
                         let load_success = data.load_file(command[1].trim());
                         if !load_success {
+                            for i in (1..8).rev() {
+                                printat(0, (vbottom - vtop + 5 + i) as u16, "                                                                                   ", &mut stdout)?;
+                            }
+                            printat(0, (vbottom - vtop + 6) as u16, "", &mut stdout)?;
                             println!("Error opening file.");
                         } else {
                             // Start the control cycle
@@ -147,8 +177,16 @@ fn main() -> io::Result<()> {
                         // Save the file
                         let save_success = data.save_file(command[1].trim());
                         if !save_success {
+                            for i in (1..8).rev() {
+                                printat(0, (vbottom - vtop + 5 + i) as u16, "                                                                                   ", &mut stdout)?;
+                            }
+                            printat(0, (vbottom - vtop + 6) as u16, "", &mut stdout)?;
                             println!("Error saving file.");
                         } else {
+                            for i in (1..8).rev() {
+                                printat(0, (vbottom - vtop + 5 + i) as u16, "                                                                                   ", &mut stdout)?;
+                            }
+                            printat(0, (vbottom - vtop + 6) as u16, "", &mut stdout)?;
                             println!("Saved file.");
                             // TODO: rerender after save (remove *)
                         }
@@ -166,6 +204,10 @@ fn main() -> io::Result<()> {
                                 control_cycle(&mut config, &mut data, &mut stdout)?;
                             },
                             _ => {
+                                for i in (1..8).rev() {
+                                    printat(0, (vbottom - vtop + 5 + i) as u16, "                                                                                   ", &mut stdout)?;
+                                }
+                                printat(0, (vbottom - vtop + 6) as u16, "", &mut stdout)?;
                                 println!("Unknown command.");
                             }
                         }
@@ -183,11 +225,19 @@ fn main() -> io::Result<()> {
                                 control_cycle(&mut config, &mut data, &mut stdout)?;
                             },
                             _ => {
+                                for i in (1..8).rev() {
+                                    printat(0, (vbottom - vtop + 5 + i) as u16, "                                                                                   ", &mut stdout)?;
+                                }
+                                printat(0, (vbottom - vtop + 6) as u16, "", &mut stdout)?;
                                 println!("Unknown command.");
                             }
                         }
                     },
                     _ => {
+                        for i in (1..8).rev() {
+                            printat(0, (vbottom - vtop + 5 + i) as u16, "                                                                                   ", &mut stdout)?;
+                        }
+                        printat(0, (vbottom - vtop + 6) as u16, "", &mut stdout)?;
                         println!("Unknown command.");
                     }
                 }
@@ -204,6 +254,10 @@ fn main() -> io::Result<()> {
                         // Set a config to a value
                         config.set_value(command[1], command[2].parse().unwrap_or(2));
                         // Display all the config items
+                        for i in (1..8).rev() {
+                            printat(0, (vbottom - vtop + 5 + i) as u16, "                                                                                   ", &mut stdout)?;
+                        }
+                        printat(0, (vbottom - vtop + 6) as u16, "", &mut stdout)?;
                         println!("{}", config.display()); // TODO: CLEAR WHILE PRINTING (ex. prevent historysize: 10 -> 9 show as 90)
                     },
                     "sort" => {
@@ -227,21 +281,37 @@ fn main() -> io::Result<()> {
                                         control_cycle(&mut config, &mut data, &mut stdout)?;
                                     },
                                     _ => {
+                                        for i in (1..8).rev() {
+                                            printat(0, (vbottom - vtop + 5 + i) as u16, "                                                                                   ", &mut stdout)?;
+                                        }
+                                        printat(0, (vbottom - vtop + 6) as u16, "", &mut stdout)?;
                                         println!("Unknown command.");
                                     }
                                 }
                             },
                             _ => {
+                                for i in (1..8).rev() {
+                                    printat(0, (vbottom - vtop + 5 + i) as u16, "                                                                                   ", &mut stdout)?;
+                                }
+                                printat(0, (vbottom - vtop + 6) as u16, "", &mut stdout)?;
                                 println!("Unknown command.");
                             }
                         }
                     },
                     _ => {
+                        for i in (1..8).rev() {
+                            printat(0, (vbottom - vtop + 5 + i) as u16, "                                                                                   ", &mut stdout)?;
+                        }
+                        printat(0, (vbottom - vtop + 6) as u16, "", &mut stdout)?;
                         println!("Unknown command.");
                     }
                 }
             }
             _ => {
+                for i in (1..8).rev() {
+                    printat(0, (vbottom - vtop + 5 + i) as u16, "                                                                                   ", &mut stdout)?;
+                }
+                printat(0, (vbottom - vtop + 6) as u16, "", &mut stdout)?;
                 println!("Unknown command.");
             }
         }
@@ -434,6 +504,12 @@ fn control_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::Shee
                                     // Undo the last action
                                     for _i in 0..real_repeat_times {
                                         data.undo();
+                                    }
+                                },
+                                'r' => {
+                                    // TODO: impl, check this does not conflict with the 'r' ifs above
+                                    for _i in 0..real_repeat_times {
+                                        data.redo();
                                     }
                                 },
                                 '0'..='9' => {
