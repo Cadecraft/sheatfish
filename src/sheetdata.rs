@@ -52,8 +52,7 @@ impl SheetData {
         self.history.clear();
         self.unsaved = false;
         self.selected = None;
-        self.historyframe = -1; // TODO: useful?
-        // TODO: call this everywhere where sheet is reset to a vector or loaded
+        self.historyframe = -1;
     }
     /// Update a sheet state
     /// (set to unsaved and add in the history; call this everywhere the sheet is changed BEFORE making the change)
@@ -71,18 +70,12 @@ impl SheetData {
         if self.history.len() > config.get_value("historysize").unwrap_or(10).try_into().unwrap_or(0) {
             // Delete from the front
             self.history.pop_front();
-            self.historyframe -= 1; // TODO: check this works as intended
+            self.historyframe -= 1;
         }
     }
     /// Undo (move back in history) and return whether successful
     pub fn undo(&mut self) -> bool {
-        // TODO: fix: after undoing the last action, editing a cell, undoing, then undoing again, the second to last action is not undone (solved: truncate keeps the first len elems)
         // Save the current state if needed
-        /*if self.historyframe == self.history.len() {
-            // This means it was updated again before undo was called
-            self.history.push_back(self.sheet.clone());
-            self.historyframe += 1;
-        }*/
         if self.historyframe <= 0 {
             return false;
         }
@@ -96,17 +89,15 @@ impl SheetData {
                 true
             }
         }
-        // TODO: impl better: selection out of bounds? (refactor to store selection in the history too?)
+        // TODO: impl better: selection out of bounds? (refactor to store selection in the history too? separate struct for "state"?)
     }
     /// Redo (move forward in history) and return whether successful
     pub fn redo(&mut self) -> bool {
-        // TODO: fix: undo must be spammed sometimes (not redo generally)
-        // TODO: impl, test
         if self.historyframe >= 0 && self.historyframe as usize >= self.history.len() - 1 {
             return false;
         }
         self.historyframe += 1;
-        match self.history.get((self.historyframe) as usize) {
+        match self.history.get(self.historyframe as usize) {
             None => {
                 self.historyframe -= 1; // Go back
                 false

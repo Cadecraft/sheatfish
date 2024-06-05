@@ -61,6 +61,9 @@ Open a .csv file and start editing
 - `save {optional: filename or path}`/`w {optional: filename or path}` -
 Save/write to a .csv file; if path not given, save to the current open file
 
+- `filename` -
+Display the filename or path of the currently edited file
+
 - `config {key} {value}` -
 Set a config key (see below)
 

@@ -106,6 +106,7 @@ fn main() -> io::Result<()> {
                     "save" | "w" => {
                         // Save the file to the same path, if possible
                         // TODO: override not-saving-if-unedited with '!'
+                        // TODO: re-render to show updated filename, etc.
                         let save_success = data.save_file(&data.file_path.clone());
                         if !save_success {
                             for i in (1..8).rev() {
@@ -120,6 +121,11 @@ fn main() -> io::Result<()> {
                             printat(0, (vbottom - vtop + 6) as u16, "", &mut stdout)?;
                             println!("Saved file.");
                         }
+                    },
+                    "filename" => {
+                        // Display the filename
+                        printat(0, (vbottom - vtop + 6) as u16, "", &mut stdout)?;
+                        println!("{}", data.file_path);
                     },
                     "config" => {
                         // Display all the config items
@@ -188,7 +194,8 @@ fn main() -> io::Result<()> {
                             }
                             printat(0, (vbottom - vtop + 6) as u16, "", &mut stdout)?;
                             println!("Saved file.");
-                            // TODO: rerender after save (remove *)
+                            // TODO: implement the rerender after save (remove *) for all/most commands
+                            render::render(&mut config, &data, &mut stdout)?;
                         }
                     },
                     "delete" | "d" => {
