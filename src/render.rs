@@ -33,7 +33,7 @@ pub fn render(config: &mut configdata::ConfigData, data: &sheetdata::SheetData, 
     // Determine sheet bounds
     let viewwidth: usize = config.get_value("viewcellswidth").unwrap_or(10).try_into().unwrap_or(10);
     let viewheight: usize = config.get_value("viewcellsheight").unwrap_or(10).try_into().unwrap_or(10);
-    let selectedcoords = data.selected.unwrap_or((0, 0));
+    let selectedcoords = data.selected().unwrap_or((0, 0));
     let vleft: usize = cmp::max(selectedcoords.1.saturating_sub(viewwidth / 2), 0);
     let vright: usize = cmp::min(vleft + viewwidth, data.bounds().1); // Non-inclusive bound
     let vtop: usize = cmp::max(selectedcoords.0.saturating_sub(viewheight / 2), 0);
@@ -74,7 +74,7 @@ pub fn render(config: &mut configdata::ConfigData, data: &sheetdata::SheetData, 
             let cellval = data.cell((row, col)).unwrap_or("");
             let fmtval = fmt_string_padding(cellval, maxcellwidth.into());
             // Render based on user selection
-            if data.selected.is_some() && (row, col) == data.selected.unwrap() {
+            if data.selected().is_some() && (row, col) == data.selected().unwrap() {
                 printstyl(
                     ((maxcellwidth + 2) as usize * (col + 1 - vleft)).try_into().unwrap_or(0),
                     ((row + 3) - vtop).try_into().unwrap_or(0),
@@ -94,8 +94,8 @@ pub fn render(config: &mut configdata::ConfigData, data: &sheetdata::SheetData, 
 
     printat(0, (vbottom - vtop + 3) as u16, "----", stdout)?;
 
-    if data.selected.is_some() && data.selected_cell_value().is_some() {
-        let selectedstr = format!("({}, {}):", data.selected.unwrap().0, data.selected.unwrap().1);
+    if data.selected().is_some() && data.selected_cell_value().is_some() {
+        let selectedstr = format!("({}, {}):", data.selected().unwrap().0, data.selected().unwrap().1);
         printat(0, (vbottom - vtop + 4) as u16, &selectedstr, stdout)?;
         printat(15, (vbottom - vtop + 4) as u16, &format!("{}", data.selected_cell_value().unwrap()), stdout)?;
     } else {

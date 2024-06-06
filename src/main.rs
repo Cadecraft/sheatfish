@@ -1,6 +1,7 @@
 // Imports
 pub mod remdata;
 pub mod sheetdata;
+pub mod sheet;
 pub mod configdata;
 pub mod render;
 pub mod ioutils;
@@ -19,6 +20,7 @@ TODOS:
     - Zoom features
     - Rerender after commands like save, delete, etc.
     - Refactor the main file
+    - Test: refactored sheet data, so now test it all
     - Performance lag in large window
     - Icon for the app exe
     - Create a release on GitHub with binaries
@@ -28,8 +30,8 @@ TODOS:
 fn main() -> io::Result<()> {
     // Initialize REM, introductions
     let rem = remdata::RemData::new(
-        "0.2.0",
-        "2024/04/13",
+        "0.3.0",
+        "2024/06/06",
         true
     );
     // First, enable raw mode and create the stdout
@@ -59,7 +61,7 @@ fn main() -> io::Result<()> {
     loop {
         // todo: better cycle appearance
         // Disable raw mode for commands
-        let selectedcoords = data.selected.unwrap_or((0, 0));
+        let selectedcoords = data.selected().unwrap_or((0, 0));
         let viewheight: usize = config.get_value("viewcellsheight").unwrap_or(10).try_into().unwrap_or(10);
         let vtop: usize = cmp::max(selectedcoords.0.saturating_sub(viewheight / 2), 0);
         let vbottom: usize = cmp::min(vtop + viewheight, data.bounds().0);
@@ -128,6 +130,7 @@ fn main() -> io::Result<()> {
                             }
                             printat(0, (vbottom - vtop + 6) as u16, "", &mut stdout)?;
                             println!("Saved file.");
+                            render::render(&mut config, &data, &mut stdout)?;
                         }
                     },
                     "filename" => {
@@ -145,7 +148,7 @@ fn main() -> io::Result<()> {
                     },
                     "sort" => {
                         // Sort
-                        data.sort_column(data.selected.unwrap_or((0, 0)).1, &config);
+                        data.sort_column(data.selected().unwrap_or((0, 0)).1, &config);
                         // Start control cycle
                         control_cycle(&mut config, &mut data, &mut stdout)?;
                     },
@@ -209,12 +212,12 @@ fn main() -> io::Result<()> {
                     "delete" | "d" => {
                         match command[1].trim() {
                             "row" | "r" => {
-                                data.delete_row(data.selected.unwrap_or((0, 0)).0, &config);
+                                data.delete_row(data.selected().unwrap_or((0, 0)).0, &config);
                                 // Start control cycle
                                 control_cycle(&mut config, &mut data, &mut stdout)?;
                             },
                             "column" | "col" | "c" => {
-                                data.delete_column(data.selected.unwrap_or((0, 0)).1, &config);
+                                data.delete_column(data.selected().unwrap_or((0, 0)).1, &config);
                                 // Start control cycle
                                 control_cycle(&mut config, &mut data, &mut stdout)?;
                             },
@@ -230,12 +233,12 @@ fn main() -> io::Result<()> {
                     "insert" | "o" | "i" => {
                         match command[1].trim() {
                             "row" | "r" => {
-                                data.insert_row(data.selected.unwrap_or((0, 0)).0, &config);
+                                data.insert_row(data.selected().unwrap_or((0, 0)).0, &config);
                                 // Start control cycle
                                 control_cycle(&mut config, &mut data, &mut stdout)?;
                             },
                             "column" | "col" | "c" => {
-                                data.insert_column(data.selected.unwrap_or((0, 0)).1, &config);
+                                data.insert_column(data.selected().unwrap_or((0, 0)).1, &config);
                                 // Start control cycle
                                 control_cycle(&mut config, &mut data, &mut stdout)?;
                             },
@@ -277,7 +280,7 @@ fn main() -> io::Result<()> {
                     },
                     "sort" => {
                         // Sort column over region command[1]..=command[2]
-                        data.sort_column_bounded(data.selected.unwrap_or((0, 0)).1, command[1].parse().unwrap_or(0), command[2].parse().unwrap_or(data.bounds().0 - 1), &config);
+                        data.sort_column_bounded(data.selected().unwrap_or((0, 0)).1, command[1].parse().unwrap_or(0), command[2].parse().unwrap_or(data.bounds().0 - 1), &config);
                         // Start control cycle
                         control_cycle(&mut config, &mut data, &mut stdout)?;
                     },
@@ -286,12 +289,12 @@ fn main() -> io::Result<()> {
                             "post" | "p" => {
                                 match command[1].trim() {
                                     "row" | "r" => {
-                                        data.insert_row(data.selected.unwrap_or((0, 0)).0 + 1, &config);
+                                        data.insert_row(data.selected().unwrap_or((0, 0)).0 + 1, &config);
                                         // Start control cycle
                                         control_cycle(&mut config, &mut data, &mut stdout)?;
                                     },
                                     "column" | "col" | "c" => {
-                                        data.insert_column(data.selected.unwrap_or((0, 0)).1 + 1, &config);
+                                        data.insert_column(data.selected().unwrap_or((0, 0)).1 + 1, &config);
                                         // Start control cycle
                                         control_cycle(&mut config, &mut data, &mut stdout)?;
                                     },
@@ -339,7 +342,7 @@ fn main() -> io::Result<()> {
 /// Utility to print an input word
 fn print_input_word(config: &mut configdata::ConfigData, data: &mut sheetdata::SheetData, stdout: &mut io::Stdout, inputword: &str) -> io::Result<()> {
     // TODO: move the whole inputword display feature into render (along with bool for isInputting) ?
-    let selectedcoords = data.selected.unwrap_or((0, 0));
+    let selectedcoords = data.selected().unwrap_or((0, 0));
     let viewheight: usize = config.get_value("viewcellsheight").unwrap_or(10).try_into().unwrap_or(10);
     let vtop: usize = cmp::max(selectedcoords.0.saturating_sub(viewheight / 2), 0);
     let vbottom: usize = cmp::min(vtop + viewheight, data.bounds().0);
@@ -472,37 +475,37 @@ fn control_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::Shee
                                 'c' if priorcapture == 'd' => {
                                     // Delete a column
                                     for _i in 0..real_repeat_times {
-                                        data.delete_column(data.selected.unwrap_or((0, 0)).1, &config);
+                                        data.delete_column(data.selected().unwrap_or((0, 0)).1, &config);
                                     }
                                 },
                                 'c' if priorcapture == 'o' => {
                                     // Insert a column left
                                     for _i in 0..real_repeat_times {
-                                        data.insert_column(data.selected.unwrap_or((0, 0)).1, &config);
+                                        data.insert_column(data.selected().unwrap_or((0, 0)).1, &config);
                                     }
                                 },
                                 'C' if priorcapture == 'o' => {
                                     // Insert a column right
                                     for _i in 0..real_repeat_times {
-                                        data.insert_column(data.selected.unwrap_or((0, 0)).1 + 1, &config);
+                                        data.insert_column(data.selected().unwrap_or((0, 0)).1 + 1, &config);
                                     }
                                 }
                                 'd' | 'r' if priorcapture == 'd' => {
                                     // Delete a row
                                     for _i in 0..real_repeat_times {
-                                        data.delete_row(data.selected.unwrap_or((0, 0)).0, &config);
+                                        data.delete_row(data.selected().unwrap_or((0, 0)).0, &config);
                                     }
                                 },
                                 'o' | 'r' if priorcapture == 'o' => {
                                     // Insert a row left
                                     for _i in 0..real_repeat_times {
-                                        data.insert_row(data.selected.unwrap_or((0, 0)).0, &config);
+                                        data.insert_row(data.selected().unwrap_or((0, 0)).0, &config);
                                     }
                                 },
                                 'O' | 'R' if priorcapture == 'o' => {
                                     // Insert a row right
                                     for _i in 0..real_repeat_times {
-                                        data.insert_row(data.selected.unwrap_or((0, 0)).0 + 1, &config);
+                                        data.insert_row(data.selected().unwrap_or((0, 0)).0 + 1, &config);
                                     }
                                 },
                                 'c' | 'i' => {
