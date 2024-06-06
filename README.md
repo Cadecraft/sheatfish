@@ -7,8 +7,6 @@ Features:
 - Easily open, edit, and save .csv files
 - Two keybind modes: Simple and Vim
 
-<!-- todo: add image of a sheatfish and a spreadsheet screenshot -->
-
 :warning: Currently a work in progress; not all features are implemented yet
 
 ![A sheatfish](sheatfish.jpg "A sheatfish")
@@ -40,7 +38,7 @@ demo_file.csv (10 x 9)
 
 Executable binaries will be added to a release eventually.
 
-## Commands (in command prompt)
+## Commands (in command prompt mode)
 
 ### System
 
@@ -56,7 +54,7 @@ Exit the command prompt (return to editing a file)
 - `new` - Create a new blank file
 
 - `open {filename or path}`/`e {filename or path}` -
-Open a .csv file and start editing
+Open a .csv file and start editing (you can also open a file with Sheatfish on the command line by putting its name as the first argument)
 
 - `save {optional: filename or path}`/`w {optional: filename or path}` -
 Save/write to a .csv file; if path not given, save to the current open file
@@ -95,6 +93,8 @@ Undo the last action (see the `historysize` config option)
 
 - `redo`/`r` -
 Redo the last undone action (see the `historysize` config option)
+
+<!-- TODO: command and keybind (vim mode) to add/remove single/double quotes around entries, including in a bulk fashion -->
 
 <!-- TODO: undo tree? -->
 <!-- TODO: allow ANY vim command sequence to be typed in to the commands?? -->
@@ -143,6 +143,10 @@ Delete the last character of the new value, or clear the current cell if there i
 - `[o] [C]` - Insert ("open") a column right of the current selection
 
 <!-- TODO: support backspace key -->
+
+<!-- TODO: 0 and gg should go to first column and first row, respectively -->
+
+<!-- TODO: visual block mode -->
 
 - `[o] [r]`/`[o] [o]` - Insert ("open") a row above the current selection
 

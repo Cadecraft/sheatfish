@@ -5,7 +5,7 @@ use crate::configdata::ConfigData;
 pub struct SheetData {
     pub file_path: String,
     sheet: Vec<Vec<String>>,
-    history: VecDeque<Vec<Vec<String>>>, // Stack of prior sheet states
+    history: VecDeque<Vec<Vec<String>>>, // Stack of prior sheet states 
     historyframe: i32, // The current index of history (if equals history length, then at new frame)
     pub selected: Option<(usize, usize)>, // (y, x)
     pub unsaved: bool
@@ -13,6 +13,7 @@ pub struct SheetData {
 
 impl SheetData {
     pub fn new() -> SheetData {
+        // TODO: refactor: make this struct for io/stuff, separate from sheet/selected
         SheetData {
             file_path: "new_file".to_string(),
             sheet: Vec::new(),
@@ -59,7 +60,7 @@ impl SheetData {
     fn update_sheet_state(&mut self, config: &ConfigData) {
         self.unsaved = true;
         // Erase history after the current frame
-        if (self.historyframe > -1) {
+        if self.historyframe > -1 {
             self.history.truncate(self.historyframe as usize + 1);
         } else {
             self.history.clear();
@@ -286,7 +287,7 @@ impl SheetData {
     pub fn sort_column(&mut self, colcoord: usize, config: &ConfigData) -> bool {
         self.sort_column_bounded(colcoord, 0, self.bounds().0 - 1, config)
     }
-    /// Sort the region of a column from rowstart to rowend, inclusive
+    /// Sort the region of a column from rowstart to rowend, inclusive, by string
     pub fn sort_column_bounded(&mut self, colcoord: usize, rowstart: usize, rowend: usize, config: &ConfigData) -> bool {
         // TODO: impl sort range and number-based sort
         if colcoord >= self.bounds().1 || rowstart > rowend || rowend >= self.bounds().0 {
@@ -303,6 +304,28 @@ impl SheetData {
         thisregion.sort();
         for (i, row) in &mut self.sheet[rowstart..=rowend].iter_mut().enumerate() {
             row[colcoord] = thisregion[i].clone();
+        }
+        self.update_sheet_state(config);
+        true
+    }
+    /// Sort the region of a column from rowstart to rowend, inclusive, by number
+    pub fn sort_column_bounded_num(&mut self, colcoord: usize, rowstart: usize, rowend: usize, config: &ConfigData) -> bool {
+        // TODO: impl sort range
+        if colcoord >= self.bounds().1 || rowstart > rowend || rowend >= self.bounds().0 {
+            return false;
+        }
+        let mut thisregion: Vec<(String, f32)> = Vec::new();
+        for row in &mut self.sheet[rowstart..=rowend] {
+            if colcoord >= row.len() {
+                // TODO: err
+                return false; // Cannot sort when not rectangular
+            }
+            thisregion.push((row[colcoord].clone(), row[colcoord].clone().parse::<f32>().unwrap_or(0.0)));
+        }
+        // TODO: fix with sort_by: v.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        thisregion.sort_by(|k, j| k.1.partial_cmp(&j.1).unwrap()); // Sort by the f32 (number) component
+        for (i, row) in &mut self.sheet[rowstart..=rowend].iter_mut().enumerate() {
+            row[colcoord] = thisregion[i].0.clone(); // Put the string component
         }
         self.update_sheet_state(config);
         true

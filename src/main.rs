@@ -7,20 +7,21 @@ pub mod ioutils;
 use ioutils::{
     printat, clear, read_key, set_raw_mode, flush
 };
-use std::{ cmp, io };
+use std::{ cmp, io, env };
 
 /*
 TODOS:
     - Git ignore editorconfig
-    - Render fully in Crossterm for colors and smooth frame transitions
     - All commands and features
     - Colors
     - Modified marker (*) next to filename and warning on quit
-    - Command line arguments?
+    - Command line arguments to open files?
     - Zoom features
     - Rerender after commands like save, delete, etc.
     - Refactor the main file
     - Performance lag in large window
+    - Icon for the app exe
+    - Create a release on GitHub with binaries
 */
 
 /// Main function
@@ -43,8 +44,16 @@ fn main() -> io::Result<()> {
     let mut config = configdata::ConfigData::new();
     let mut data = sheetdata::SheetData::new();
 
-    // Load a blank default vector
-    data.load_vector(&vec![vec!["".to_string(); 16]; 16]);
+    // Depends on if there is a command line argument
+    let args: Vec<String> = env::args().collect();
+    if args.len() <= 1 {
+        // No file passed in: load a blank default vector
+        data.load_vector(&vec![vec!["".to_string(); 16]; 16]);
+    } else {
+        // File passed in: try to load; otherwise, just default vector
+        data.load_vector(&vec![vec!["".to_string(); 16]; 16]);
+        data.load_file(&args[1]);
+    }
 
     // Start the command cycle
     loop {
@@ -60,8 +69,7 @@ fn main() -> io::Result<()> {
         flush(&mut stdout)?;
 
         set_raw_mode(false)?;
-        //terminal::disable_raw_mode().expect("ERR: Crossterm could not disable Raw Mode");
-        // todo: refactor: command class
+        // TODO: refactor: command class
         let mut uin = String::new();
         std::io::stdin().read_line(&mut uin).expect("Failed to read line");
         let mut command: Vec<&str> = uin.trim().split(' ').collect();
@@ -80,8 +88,8 @@ fn main() -> io::Result<()> {
                                 printat(0, (vbottom - vtop + 5 + i) as u16, "                                                                                   ", &mut stdout)?;
                             }
                             printat(0, (vbottom - vtop + 6) as u16, "", &mut stdout)?; // TODO: heavy refactoring of this clear section (repeated a lot)
-                            println!("You have unsaved changes.");
-                            println!("If you want to print without saving, use \"quit!\" or \"q!\" instead");
+                            println!("You have unsaved changes to this file.");
+                            println!("If you want to quit without saving, use \"quit!\" or \"q!\" instead");
                         } else {
                             // Able to quit
                             break;
