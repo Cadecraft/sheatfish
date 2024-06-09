@@ -12,7 +12,6 @@ pub struct SheetData {
 }
 
 impl SheetData {
-    // TODO: TEST the refactor (loading files, saving files, undos when cleared, all editing stuff)
     pub fn new() -> SheetData {
         SheetData {
             file_path: "new_file".to_string(),
@@ -55,6 +54,7 @@ impl SheetData {
     }
     /// Undo (move back in history) and return whether successful
     pub fn undo(&mut self) -> bool {
+        self.unsaved = true;
         // Save the current state if needed
         if self.historyframe <= 0 {
             return false;
@@ -72,6 +72,7 @@ impl SheetData {
     }
     /// Redo (move forward in history) and return whether successful
     pub fn redo(&mut self) -> bool {
+        self.unsaved = true;
         if self.historyframe >= 0 && self.historyframe as usize >= self.history.len() - 1 {
             return false;
         }

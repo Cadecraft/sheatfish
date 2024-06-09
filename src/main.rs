@@ -15,15 +15,13 @@ TODOS:
     - Git ignore editorconfig
     - All commands and features
     - Colors
-    - Modified marker (*) next to filename and warning on quit
-    - Command line arguments to open files?
-    - Zoom features
-    - Rerender after commands like save, delete, etc.
+    - Zoom features (expand and contract cells from one small width to a bigger one?)
+    - Misc. scattered todos
+    - Rerender after ALL commands like save, delete, etc.
     - Refactor the main file
-    - Test: refactored sheet data, so now test it all
     - Performance lag in large window
     - Icon for the app exe
-    - Create a release on GitHub with binaries
+    - Create a release on GitHub with binaries (release build)
 */
 
 /// Main function

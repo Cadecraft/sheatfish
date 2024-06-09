@@ -118,6 +118,8 @@ Commit the new value to the current cell, or edit the current cell's value if th
 - `[backspace]` -
 Delete the last character of the new value, or clear the current cell if there is no new value
 
+<!-- TODO: cut and paste cells -->
+
 ### Vim Mode
 
 - `[:]` - Exit a file (return to command prompt, ex. `[:][q][enter]` -> quit)
@@ -137,6 +139,8 @@ Delete the last character of the new value, or clear the current cell if there i
 - `[a]` - Append into a cell (add characters at the end)
 
 - `[x]` - Delete the value in the cell
+
+<!-- TODO: cut and paste cells -->
 
 - `[o] [c]` - Insert ("open") a column left of the current selection
 
@@ -178,6 +182,6 @@ Max height of cells to show on screen at once before scrolling (integer from 1..
 Set to 1 to use the Vim Mode keybinds (see above) (integer from 0..=1, default 0)
 
 - `historysize` -
-Max number of prior states stored for the undo history (integer from 0.., default 10)
+Max number of prior states stored for the undo history (integer from 0.., default 100)
 
 <!-- TODO: config option to save files without trailing commas>

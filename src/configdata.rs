@@ -17,7 +17,7 @@ impl ConfigData {
                 ("vimmode".to_string(), 0),
                 ("viewcellswidth".to_string(), 10),
                 ("viewcellsheight".to_string(), 10),
-                ("historysize".to_string(), 10)
+                ("historysize".to_string(), 100)
             ]),
             savepath: String::from("sheatfish_config.csv")
         };

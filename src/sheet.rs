@@ -103,6 +103,7 @@ impl Sheet {
             self.set_selected_coords((0, 0));
             return;
         };
+        // TODO: saturating subtract instead (bounds check in set_selected_coords means vim number commands do nothing if saturating)
         let new0: usize = (selected.0 as isize + delta.0).try_into().unwrap_or(0);
         let new1: usize = (selected.1 as isize + delta.1).try_into().unwrap_or(0);
         self.set_selected_coords((new0, new1));
