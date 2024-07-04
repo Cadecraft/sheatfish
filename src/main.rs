@@ -106,7 +106,23 @@ fn main() -> io::Result<()> {
                     },
                     "new" => {
                         // New file: load a blank default vector
-                        // TODO: implement the same confirmation system if unsaved as with `quit` (cancel with '!')
+                        if data.unsaved {
+                            // New confirmation
+                            for i in (1..8).rev() {
+                                printat(0, (vbottom - vtop + 5 + i) as u16, "                                                                                   ", &mut stdout)?;
+                            }
+                            printat(0, (vbottom - vtop + 6) as u16, "", &mut stdout)?; // TODO: heavy refactoring of this clear section (repeated a lot)
+                            println!("You have unsaved changes to this file.");
+                            println!("If you want to replace it with a new file without saving, use \"new!\" instead");
+                        } else {
+                            // Able to load
+                            data.load_vector(&vec![vec!["".to_string(); 16]; 16]);
+                            // Start control cycle
+                            control_cycle(&mut config, &mut data, &mut stdout)?;
+                        }
+                    },
+                    "new!" => {
+                        // New file: load a blank default vector
                         data.load_vector(&vec![vec!["".to_string(); 16]; 16]);
                         // Start control cycle
                         control_cycle(&mut config, &mut data, &mut stdout)?;
@@ -175,7 +191,31 @@ fn main() -> io::Result<()> {
                 match command[0].trim() {
                     "open" | "e" => {
                         // Load the file
-                        // TODO: quit confirmation if unsaved (cancel with '!')
+                        if data.unsaved {
+                            // Load confirmation
+                            for i in (1..8).rev() {
+                                printat(0, (vbottom - vtop + 5 + i) as u16, "                                                                                   ", &mut stdout)?;
+                            }
+                            printat(0, (vbottom - vtop + 6) as u16, "", &mut stdout)?;
+                            println!("You have unsaved changes to this file.");
+                            println!("If you want to switch to a new file without saving, use \"open!\" or \"e!\" instead");
+                        } else {
+                            let load_success = data.load_file(command[1].trim());
+                            if !load_success {
+                                for i in (1..8).rev() {
+                                    printat(0, (vbottom - vtop + 5 + i) as u16, "                                                                                   ", &mut stdout)?;
+                                }
+                                printat(0, (vbottom - vtop + 6) as u16, "", &mut stdout)?;
+                                println!("Error opening file.");
+                                // TODO: handle error better
+                            } else {
+                                // Start the control cycle
+                                control_cycle(&mut config, &mut data, &mut stdout)?;
+                            }
+                        }
+                    },
+                    "open!" | "e!" => {
+                        // Force load the file
                         let load_success = data.load_file(command[1].trim());
                         if !load_success {
                             for i in (1..8).rev() {

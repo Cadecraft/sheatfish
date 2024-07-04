@@ -1,6 +1,6 @@
 # Sheatfish
 
-An incredibly simple, lightweight terminal-based spreadsheet/csv editor written in Rust!
+An incredibly lightweight, productive terminal-based spreadsheet/csv editor written in Rust!
 
 Features:
 
@@ -43,18 +43,15 @@ Executable binaries will be added to a release eventually.
 ### System
 
 - `quit`/`q` -
-Quit
-
-- `quit!`/`q!` -
-Force quit (discards unsaved changes)
+Quit \*
 
 - `edit`/`e` -
 Exit the command prompt (return to editing a file)
 
-- `new` - Create a new blank file
+- `new` - Create a new blank file \*
 
 - `open {filename or path}`/`e {filename or path}` -
-Open a .csv file and start editing (you can also open a file with Sheatfish on the command line by putting its name as the first argument)
+Open a .csv file and start editing (you can also open a file with Sheatfish on the command line by putting its name as the first argument) \*
 
 - `save {optional: filename or path}`/`w {optional: filename or path}` -
 Save/write to a .csv file; if path not given, save to the current open file
@@ -67,6 +64,8 @@ Set a config key (see below)
 
 - `config` -
 See all config keys (see below)
+
+\* = add a `!` (ex. `quit!` or `q!`) to force this command, discarding current unsaved changes
 
 ### Editing
 
@@ -164,8 +163,8 @@ Delete the last character of the new value, or clear the current cell if there i
 
 - `[u]` - Undo the last action
 
-<!-- TODO: test redo feature -->
 - `[r]` - Redo the last action
+<!-- TODO: add simple evaluation functions (with parentheses/comma nesting), like `=SUM(3, MUL(4-5, 5-5)` adds 3 and the product of cell (4, 5) times cell (5, 5) -->
 
 ## Config
 
