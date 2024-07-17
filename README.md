@@ -7,7 +7,7 @@ Features:
 - Easily open, edit, and save .csv files
 - Two keybind modes: Simple and Vim
 
-:warning: Currently a work in progress; not all features are implemented yet
+:warning: Currently a work in progress; not all features below are fully implemented yet
 
 ![A sheatfish](sheatfish.jpg "A sheatfish")
 
@@ -38,6 +38,8 @@ demo_file.csv (10 x 9)
 
 Executable binaries will be added to a release eventually.
 
+Sheatfish should work on all major platforms, but has currently only been tested in Windows 10 and Debian.
+
 ## Commands (in command prompt mode)
 
 ### System
@@ -56,7 +58,7 @@ Open a .csv file and start editing (you can also open a file with Sheatfish on t
 - `save {optional: filename or path}`/`w {optional: filename or path}` -
 Save/write to a .csv file; if path not given, save to the current open file
 
-- `filename` -
+- `path` -
 Display the filename or path of the currently edited file
 
 - `config {key} {value}` -
@@ -97,6 +99,8 @@ Redo the last undone action (see the `historysize` config option)
 
 <!-- TODO: undo tree? -->
 <!-- TODO: allow ANY vim command sequence to be typed in to the commands?? -->
+
+<!-- TODO: keybind while in command mode for previous commands, and a command history (up and down arrows) -->
 
 ## Keybinds (while editing)
 

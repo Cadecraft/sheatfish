@@ -6,7 +6,7 @@ use crate::sheet::Sheet;
 pub struct SheetData {
     pub file_path: String,
     sheet: Sheet,
-    history: VecDeque<Sheet>, // Stack of prior sheet states 
+    history: VecDeque<Sheet>, // Stack of prior sheet states
     historyframe: i32, // The current index of history (if equals history length, then at new frame)
     pub unsaved: bool
 }

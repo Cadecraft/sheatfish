@@ -26,8 +26,16 @@ pub fn render(config: &mut configdata::ConfigData, data: &sheetdata::SheetData, 
     clear(stdout)?;
 
     // Render sheet title and info
-    // TODO: print filename only (not full path; search backwards by / or \) ?
-    printat(0, 0, &format!("{}{} ({} x {})", if data.unsaved { "*" } else { "" }, data.file_path, data.bounds().0, data.bounds().1), stdout)?;
+    // TODO: print filename only (not full path; search backwards by / or \, and provide the path in a separate command) ?
+    let mut filenameonly = String::new();
+    for c in data.file_path.chars().rev() {
+        if c == '\\' || c == '/' {
+            break;
+        } else {
+            filenameonly.insert(0, c);
+        }
+    }
+    printat(0, 0, &format!("{}{} ({} x {})", if data.unsaved { "*" } else { "" }, filenameonly, data.bounds().0, data.bounds().1), stdout)?;
     printat(0, 1, "----", stdout)?;
 
     // Determine sheet bounds
@@ -43,7 +51,7 @@ pub fn render(config: &mut configdata::ConfigData, data: &sheetdata::SheetData, 
     let maxcellwidth: u16 = config.get_value("maxcellwidth").unwrap_or(5).try_into().unwrap_or(5);
 
     // Render debug info
-    printstyl(70, 1, format!("dbg: len={}, curr={}", data.dbg_get_history_info().0, data.dbg_get_history_info().1).dark_cyan(), stdout)?;
+    //printstyl(70, 1, format!("dbg: len={}, curr={}", data.dbg_get_history_info().0, data.dbg_get_history_info().1).dark_cyan(), stdout)?;
 
     // Render row and column titles
     // TODO: more colors
@@ -102,6 +110,8 @@ pub fn render(config: &mut configdata::ConfigData, data: &sheetdata::SheetData, 
         printat(0, (vbottom - vtop + 4) as u16, "no cell selected", stdout)?;
     }
     printat(0, 2, "", stdout)?;
+
+    // TODO: print bottom message (for rerendering after commands rather than temporary command writing/overwriting)
 
     // Flush the buffer to finish
     flush(stdout)?;

@@ -28,8 +28,8 @@ TODOS:
 fn main() -> io::Result<()> {
     // Initialize REM, introductions
     let rem = remdata::RemData::new(
-        "0.3.0",
-        "2024/06/06",
+        "0.3.1",
+        "2024/07/16",
         true
     );
     // First, enable raw mode and create the stdout
@@ -147,8 +147,8 @@ fn main() -> io::Result<()> {
                             render::render(&mut config, &data, &mut stdout)?;
                         }
                     },
-                    "filename" => {
-                        // Display the filename
+                    "path" => {
+                        // Display the file path (filename with path as entered)
                         printat(0, (vbottom - vtop + 6) as u16, "", &mut stdout)?;
                         println!("{}", data.file_path);
                     },
