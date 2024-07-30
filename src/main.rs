@@ -22,6 +22,7 @@ TODOS:
     - Performance lag in large window
     - Icon for the app exe
     - Create a release on GitHub with binaries (release build)
+    - Fix: tmux rendering issues (tmux on arch on wsl on windows terminal)
 */
 
 /// Main function

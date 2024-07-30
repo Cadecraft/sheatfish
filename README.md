@@ -34,11 +34,12 @@ demo_file.csv (10 x 9)
 ## Installation
 
 1. Download this source code
-2. Build using `cargo`
+2. Build using `cargo` (`cargo build` or `cargo install --path .` in the directory)
 
 Executable binaries will be added to a release eventually.
 
-Sheatfish should work on all major platforms, but has currently only been tested in Windows 10 and Debian.
+Sheatfish should work on all major platforms, but has currently only been tested in Windows 10, Debian (WSL2), and Arch (WSL2).
+Some rendering issues have been encountered when testing in tmux.
 
 ## Commands (in command prompt mode)
 
