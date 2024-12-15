@@ -4,14 +4,11 @@ An incredibly lightweight, productive terminal-based spreadsheet/csv editor writ
 
 Features:
 
-- Easily open, edit, and save .csv files
+- Easily open, edit, and save .csv files in your terminal
 - Two keybind modes: Simple and Vim
+- Easy to configure
 
-:warning: Currently a work in progress; not all features below are fully implemented yet
-
-![A sheatfish](sheatfish.jpg "A sheatfish")
-
-UI example:
+UI example "screenshot":
 
 ```
 demo_file.csv (10 x 9)
@@ -38,7 +35,7 @@ demo_file.csv (10 x 9)
 
 Executable binaries will be added to a release eventually.
 
-Sheatfish should work on all major platforms, but has currently only been tested in Windows 10, Debian (WSL2), and Arch (WSL2).
+Sheatfish should work on all major platforms, and has currently been tested on Windows 10, Windows 11, Debian (WSL2), and Arch (WSL2).
 Some rendering issues have been encountered when testing in tmux.
 
 ## Commands (in command prompt mode)
@@ -189,3 +186,5 @@ Set to 1 to use the Vim Mode keybinds (see above) (integer from 0..=1, default 0
 Max number of prior states stored for the undo history (integer from 0.., default 100)
 
 <!-- TODO: config option to save files without trailing commas>
+
+<!-- TODO: save config file in home directory so it can be edited -->
