@@ -29,8 +29,8 @@ TODOS:
 fn main() -> io::Result<()> {
     // Initialize REM, introductions
     let rem = remdata::RemData::new(
-        "0.3.1",
-        "2024/07/16",
+        "0.4.0",
+        "2024/12/16",
         true
     );
     // First, enable raw mode and create the stdout

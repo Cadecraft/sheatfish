@@ -63,7 +63,7 @@ Display the filename or path of the currently edited file
 Set a config key (see below)
 
 - `config` -
-See all config keys (see below)
+See all config keys and their current values (see below)
 
 \* = add a `!` (ex. `quit!` or `q!`) to force this command, discarding current unsaved changes
 
@@ -170,6 +170,10 @@ Delete the last character of the new value, or clear the current cell if there i
 
 ## Config
 
+The configuration file, `.sheatfish_config.csv`, is stored in your home directory. If this fails, it will instead be placed inside your current working directory.
+
+You can edit the configuration with the `config` command, but since it's a .csv file, you can also edit it using Sheatfish itself!
+
 - `maxcellwidth` -
 Max inner width of a cell (integer from 1.., default 5)
 
@@ -186,5 +190,3 @@ Set to 1 to use the Vim Mode keybinds (see above) (integer from 0..=1, default 0
 Max number of prior states stored for the undo history (integer from 0.., default 100)
 
 <!-- TODO: config option to save files without trailing commas>
-
-<!-- TODO: save config file in home directory so it can be edited -->

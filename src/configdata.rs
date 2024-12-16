@@ -1,16 +1,30 @@
 use std::collections::HashMap;
 use std::fs;
+use std::path::PathBuf;
+use homedir::my_home;
 
 /// Stores the config data
 pub struct ConfigData {
     datamap: HashMap<String, i32>,
-    savepath: String,
+    savepath: PathBuf,
 }
 
 impl ConfigData {
     /// Create a new ConfigData with the default parameters
     pub fn new() -> ConfigData {
         // Default config
+        let mut savepath_path = match my_home() {
+            Ok(home_path_option) => {
+                match home_path_option {
+                    Some(home_path) => {
+                        home_path
+                    },
+                    _ => PathBuf::from("./")
+                }
+            },
+            _ => PathBuf::from("./")
+        };
+        savepath_path.push(".sheatfish_config.csv");
         let mut res = ConfigData {
             datamap: HashMap::from([
                 ("maxcellwidth".to_string(), 5),
@@ -19,7 +33,7 @@ impl ConfigData {
                 ("viewcellsheight".to_string(), 10),
                 ("historysize".to_string(), 100)
             ]),
-            savepath: String::from("sheatfish_config.csv")
+            savepath: savepath_path
         };
         // Try to load from the file
         res.load_from_file();
