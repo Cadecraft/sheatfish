@@ -349,7 +349,7 @@ fn control_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::Shee
                         // Delete the last char in inputword if it exists; otherwise, clear the cell
                         if !inputword.is_empty() {
                             inputword.pop();
-                            print!("<");
+                            print_input_word(vstart, stdout, &inputword)?;
                             endinput = false;
                         } else {
                             data.set_selected_cell_value(String::new(), &config); // Cleared; rerender
@@ -402,6 +402,15 @@ fn control_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::Shee
                             endinput = true;
                         }
                     },
+                    crossterm::event::KeyCode::Backspace => {
+                        // Delete the last char in inputword if it exists
+                        // In vim mode, backspace does not clear the cell
+                        if !inputword.is_empty() {
+                            inputword.pop();
+                            print_input_word(vstart, stdout, &inputword)?;
+                            endinput = false;
+                        }
+                    }
                     crossterm::event::KeyCode::Char(c) => {
                         // Char c has been typed
                         if insertmode {

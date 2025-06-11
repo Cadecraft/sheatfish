@@ -74,9 +74,29 @@ pub fn flush(stdout: &mut io::Stdout) -> io::Result<()> {
     io::Result::Ok(())
 }
 
-/// Clear the area below the input line
-fn clear_input_region(vstart: u16, stdout: &mut io::Stdout) -> io::Result<()> {
-    const CLEAR_WIDTH: u16 = 83;
+const CLEAR_WIDTH: u16 = 83;
+
+/// Print an input word (the value of the cell currently being edited/viewed)
+pub fn print_input_word(vstart: u16, stdout: &mut io::Stdout, inputword: &str) -> io::Result<()> {
+    const LEFT_INPUT_WORD_BOUND: u16 = 15;
+    let clearing_string: &str = &(0..(CLEAR_WIDTH - LEFT_INPUT_WORD_BOUND)).map(|_| " ").collect::<String>();
+    printat(LEFT_INPUT_WORD_BOUND, vstart, clearing_string, stdout)?;
+    printat(LEFT_INPUT_WORD_BOUND, vstart, inputword, stdout)?;
+    flush(stdout)?;
+    io::Result::Ok(())
+}
+
+/// Display the command prompt
+pub fn print_command_prompt(vstart: u16, stdout: &mut io::Stdout) -> io::Result<()> {
+    let clearing_string: &str = &(0..CLEAR_WIDTH).map(|_| " ").collect::<String>();
+    printat(0, vstart + 1, clearing_string, stdout)?;
+    printat(0, vstart + 1, "Enter a command (see README.md for commands): ", stdout)?;
+    flush(stdout)?;
+    io::Result::Ok(())
+}
+
+/// Clear the area below the command prompt
+fn clear_status_region(vstart: u16, stdout: &mut io::Stdout) -> io::Result<()> {
     const CLEAR_HEIGHT: u16 = 8;
     let clearing_string: &str = &(0..CLEAR_WIDTH).map(|_| " ").collect::<String>();
     for i in (1..CLEAR_HEIGHT).rev() {
@@ -86,28 +106,9 @@ fn clear_input_region(vstart: u16, stdout: &mut io::Stdout) -> io::Result<()> {
     io::Result::Ok(())
 }
 
-/// Print an input word (the value of the cell currently being edited/viewed)
-pub fn print_input_word(vstart: u16, stdout: &mut io::Stdout, inputword: &str) -> io::Result<()> {
-    clear_input_region(vstart, stdout)?;
-    const LEFT_INPUT_WORD_BOUND: u16 = 15;
-    printat(LEFT_INPUT_WORD_BOUND, vstart, inputword, stdout)?;
-    flush(stdout)?;
-    io::Result::Ok(())
-}
-
-/// Display the command prompt
-pub fn print_command_prompt(vstart: u16, stdout: &mut io::Stdout) -> io::Result<()> {
-    const CLEAR_WIDTH: u16 = 83;
-    let clearing_string: &str = &(0..CLEAR_WIDTH).map(|_| " ").collect::<String>();
-    printat(0, vstart + 1, clearing_string, stdout)?;
-    printat(0, vstart + 1, "Enter a command (see README.md for commands): ", stdout)?;
-    flush(stdout)?;
-    io::Result::Ok(())
-}
-
 /// Print a status message
 pub fn print_status_message(vstart: u16, stdout: &mut io::Stdout, msg: &str) -> io::Result<()> {
-    clear_input_region(vstart, stdout)?;
+    clear_status_region(vstart, stdout)?;
     printat(0, vstart + 2, msg, stdout)?;
     flush(stdout)?;
     io::Result::Ok(())
