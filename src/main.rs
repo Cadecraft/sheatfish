@@ -55,17 +55,11 @@ fn main() -> io::Result<()> {
     // Start the command cycle
     loop {
         // TODO: better cycle appearance
-        // Disable raw mode for commands
-        let selectedcoords = data.selected().unwrap_or((0, 0));
-        let viewheight: usize = config.get_value("viewcellsheight").unwrap_or(10).try_into().unwrap_or(10);
-        let vtop: usize = cmp::max(selectedcoords.0.saturating_sub(viewheight / 2), 0);
-        let vbottom: usize = cmp::min(vtop + viewheight, data.bounds().0);
-        // Display
-        printat(0, (vbottom - vtop + 5) as u16, "                                                                                   ", &mut stdout)?;
-        printat(0, (vbottom - vtop + 5) as u16, "Enter a command (see README.md for commands): ", &mut stdout)?;
-        flush(&mut stdout)?;
+        print_command_prompt(&config, &data, &mut stdout)?;
 
+        // Raw mode should be disabled for commands
         set_raw_mode(false)?;
+
         let mut uin = String::new();
         std::io::stdin().read_line(&mut uin).expect("Failed to read line");
         let user_command = command::Command::from(&uin);
@@ -322,6 +316,17 @@ fn print_input_word(config: &configdata::ConfigData, data: &sheetdata::SheetData
     io::Result::Ok(())
 }
 
+/// Utility to display the command prompt
+fn print_command_prompt(config: &configdata::ConfigData, data: &sheetdata::SheetData, stdout: &mut io::Stdout) -> io::Result<()> {
+    let vstart = vertical_coord_of_input(config, data);
+    const CLEAR_WIDTH: u16 = 83;
+    let clearing_string: &str = &(0..CLEAR_WIDTH).map(|_| " ").collect::<String>();
+    printat(0, vstart + 1, clearing_string, stdout)?;
+    printat(0, vstart + 1, "Enter a command (see README.md for commands): ", stdout)?;
+    flush(stdout)?;
+    io::Result::Ok(())
+}
+
 /// Utility to print a status message
 fn print_status_message(config: &configdata::ConfigData, data: &sheetdata::SheetData, stdout: &mut io::Stdout, msg: &str) -> io::Result<()> {
     clear_input_region(config, data, stdout)?;
@@ -336,15 +341,17 @@ fn clear_input_region(config: &configdata::ConfigData, data: &sheetdata::SheetDa
     let vstart = vertical_coord_of_input(config, data);
     const CLEAR_WIDTH: u16 = 83;
     const CLEAR_HEIGHT: u16 = 8;
-    let clearingstring = &(0..CLEAR_WIDTH).map(|_| " ").collect::<String>();
+    let clearing_string: &str = &(0..CLEAR_WIDTH).map(|_| " ").collect::<String>();
     for i in (1..CLEAR_HEIGHT).rev() {
-        printat(0, vstart + 1 + i, clearingstring, stdout)?;
+        printat(0, vstart + 1 + i, clearing_string, stdout)?;
     }
     printat(0, vstart + 2, "", stdout)?;
     io::Result::Ok(())
 }
 
-/// Command cycle function
+/// Command cycle
+
+/// Input cycle function (when in "normal"/non-command mode)
 fn control_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::SheetData, stdout: &mut io::Stdout) -> io::Result<()> {
     loop {
         // Render
