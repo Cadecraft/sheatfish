@@ -76,6 +76,7 @@ impl Sheet {
     pub fn load_vector(&mut self, newsheet: &Vec<Vec<String>>) {
         self.clear();
         self.sheet = newsheet.clone();
+        self.selected = None;
     }
     /// Get the sheet bounds (y len, x len)
     /// If the sheet is not rectangular, bounds are based off first row

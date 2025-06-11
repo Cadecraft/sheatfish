@@ -18,7 +18,7 @@ impl SheetData {
             sheet: Sheet::new(),
             history: VecDeque::new(),
             historyframe: -1,
-            unsaved: true
+            unsaved: false
         }
     }
     /// DBG: Get the history info (length and frame)
@@ -99,13 +99,19 @@ impl SheetData {
         }
         let res = read_res.unwrap().replace("\r\n", "\n").replace("\r", "\n");
         // Update the sheet
-        self.sheet.load_string(res)
+        if self.sheet.load_string(res) {
+            self.unsaved = false;
+            true
+        } else {
+            false
+        }
     }
     /// Load a vector literal
     pub fn load_vector(&mut self, newsheet: &Vec<Vec<String>>) {
         self.clear_sheet_state();
         self.file_path = "generated_file".to_string();
         self.sheet.load_vector(newsheet);
+        self.unsaved = true;
     }
     /// Save to a file, return whether successful
     pub fn save_file(&mut self, path: &str) -> bool {
