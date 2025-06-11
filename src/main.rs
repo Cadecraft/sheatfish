@@ -5,6 +5,7 @@ pub mod sheet;
 pub mod configdata;
 pub mod render;
 pub mod ioutils;
+pub mod command;
 use ioutils::{
     printat, clear, read_key, set_raw_mode, flush
 };
@@ -45,20 +46,15 @@ fn main() -> io::Result<()> {
     let mut config = configdata::ConfigData::new();
     let mut data = sheetdata::SheetData::new();
 
-    // Depends on if there is a command line argument
+    // If there is a command line argument, try to load that file
     let args: Vec<String> = env::args().collect();
-    if args.len() <= 1 {
-        // No file passed in: load a blank default vector
-        data.load_vector(&vec![vec!["".to_string(); 16]; 16]);
-    } else {
-        // File passed in: try to load; otherwise, just default vector
-        data.load_vector(&vec![vec!["".to_string(); 16]; 16]);
+    if args.len() > 1 {
         data.load_file(&args[1]);
     }
 
     // Start the command cycle
     loop {
-        // todo: better cycle appearance
+        // TODO: better cycle appearance
         // Disable raw mode for commands
         let selectedcoords = data.selected().unwrap_or((0, 0));
         let viewheight: usize = config.get_value("viewcellsheight").unwrap_or(10).try_into().unwrap_or(10);
@@ -73,22 +69,15 @@ fn main() -> io::Result<()> {
         // TODO: refactor: command class
         let mut uin = String::new();
         std::io::stdin().read_line(&mut uin).expect("Failed to read line");
-        let mut command: Vec<&str> = uin.trim().split(' ').collect();
-        // Remove leading ':' (for vim users)
-        if command.len() > 0 && command[0].starts_with(":") {
-            command[0] = command[0].strip_prefix(':').unwrap_or(command[0]);
-        }
-        match command.len() {
+        let user_command = command::Command::from(&uin);
+        match user_command.len() {
             1 => {
-                match command[0].trim() {
+                match user_command.term(0) {
                     "quit" | "q" => {
                         // Quit
                         if data.unsaved {
                             // Quit confirmation
-                            for i in (1..8).rev() {
-                                printat(0, (vbottom - vtop + 5 + i) as u16, "                                                                                   ", &mut stdout)?;
-                            }
-                            printat(0, (vbottom - vtop + 6) as u16, "", &mut stdout)?; // TODO: heavy refactoring of this clear section (repeated a lot)
+                            clear_input_region(&config, &data, &mut stdout)?;
                             println!("You have unsaved changes to this file.");
                             println!("If you want to quit without saving, use \"quit!\" or \"q!\" instead");
                         } else {
@@ -109,10 +98,7 @@ fn main() -> io::Result<()> {
                         // New file: load a blank default vector
                         if data.unsaved {
                             // New confirmation
-                            for i in (1..8).rev() {
-                                printat(0, (vbottom - vtop + 5 + i) as u16, "                                                                                   ", &mut stdout)?;
-                            }
-                            printat(0, (vbottom - vtop + 6) as u16, "", &mut stdout)?; // TODO: heavy refactoring of this clear section (repeated a lot)
+                            clear_input_region(&config, &data, &mut stdout)?;
                             println!("You have unsaved changes to this file.");
                             println!("If you want to replace it with a new file without saving, use \"new!\" instead");
                         } else {
@@ -134,16 +120,10 @@ fn main() -> io::Result<()> {
                         // TODO: re-render to show updated filename, etc.
                         let save_success = data.save_file(&data.file_path.clone());
                         if !save_success {
-                            for i in (1..8).rev() {
-                                printat(0, (vbottom - vtop + 5 + i) as u16, "                                                                                   ", &mut stdout)?;
-                            }
-                            printat(0, (vbottom - vtop + 6) as u16, "", &mut stdout)?;
+                            clear_input_region(&config, &data, &mut stdout)?;
                             println!("Error saving file.");
                         } else {
-                            for i in (1..8).rev() {
-                                printat(0, (vbottom - vtop + 5 + i) as u16, "                                                                                   ", &mut stdout)?;
-                            }
-                            printat(0, (vbottom - vtop + 6) as u16, "", &mut stdout)?;
+                            clear_input_region(&config, &data, &mut stdout)?;
                             println!("Saved file.");
                             render::render(&mut config, &data, &mut stdout)?;
                         }
@@ -155,10 +135,7 @@ fn main() -> io::Result<()> {
                     },
                     "config" => {
                         // Display all the config items
-                        for i in (1..8).rev() {
-                            printat(0, (vbottom - vtop + 5 + i) as u16, "                                                                                   ", &mut stdout)?;
-                        }
-                        printat(0, (vbottom - vtop + 6) as u16, "", &mut stdout)?;
+                        clear_input_region(&config, &data, &mut stdout)?;
                         println!("{}", config.display());
                     },
                     "sort" => {
@@ -180,33 +157,24 @@ fn main() -> io::Result<()> {
                         control_cycle(&mut config, &mut data, &mut stdout)?;
                     },
                     _ => {
-                        for i in (1..8).rev() {
-                            printat(0, (vbottom - vtop + 5 + i) as u16, "                                                                                   ", &mut stdout)?;
-                        }
-                        printat(0, (vbottom - vtop + 6) as u16, "", &mut stdout)?;
-                        println!("Unknown command."); // todo: refactor unknown ?
+                        clear_input_region(&config, &data, &mut stdout)?;
+                        println!("Unknown command."); // TODO: refactor unknown ?
                     }
                 }
             },
             2 => {
-                match command[0].trim() {
+                match user_command.term(0) {
                     "open" | "e" => {
                         // Load the file
                         if data.unsaved {
                             // Load confirmation
-                            for i in (1..8).rev() {
-                                printat(0, (vbottom - vtop + 5 + i) as u16, "                                                                                   ", &mut stdout)?;
-                            }
-                            printat(0, (vbottom - vtop + 6) as u16, "", &mut stdout)?;
+                            clear_input_region(&config, &data, &mut stdout)?;
                             println!("You have unsaved changes to this file.");
                             println!("If you want to switch to a new file without saving, use \"open!\" or \"e!\" instead");
                         } else {
-                            let load_success = data.load_file(command[1].trim());
+                            let load_success = data.load_file(user_command.term(1));
                             if !load_success {
-                                for i in (1..8).rev() {
-                                    printat(0, (vbottom - vtop + 5 + i) as u16, "                                                                                   ", &mut stdout)?;
-                                }
-                                printat(0, (vbottom - vtop + 6) as u16, "", &mut stdout)?;
+                                clear_input_region(&config, &data, &mut stdout)?;
                                 println!("Error opening file.");
                                 // TODO: handle error better
                             } else {
@@ -217,12 +185,9 @@ fn main() -> io::Result<()> {
                     },
                     "open!" | "e!" => {
                         // Force load the file
-                        let load_success = data.load_file(command[1].trim());
+                        let load_success = data.load_file(user_command.term(1));
                         if !load_success {
-                            for i in (1..8).rev() {
-                                printat(0, (vbottom - vtop + 5 + i) as u16, "                                                                                   ", &mut stdout)?;
-                            }
-                            printat(0, (vbottom - vtop + 6) as u16, "", &mut stdout)?;
+                            clear_input_region(&config, &data, &mut stdout)?;
                             println!("Error opening file.");
                         } else {
                             // Start the control cycle
@@ -231,25 +196,19 @@ fn main() -> io::Result<()> {
                     },
                     "save" | "w" => {
                         // Save the file
-                        let save_success = data.save_file(command[1].trim());
+                        let save_success = data.save_file(user_command.term(1));
                         if !save_success {
-                            for i in (1..8).rev() {
-                                printat(0, (vbottom - vtop + 5 + i) as u16, "                                                                                   ", &mut stdout)?;
-                            }
-                            printat(0, (vbottom - vtop + 6) as u16, "", &mut stdout)?;
+                            clear_input_region(&config, &data, &mut stdout)?;
                             println!("Error saving file.");
                         } else {
-                            for i in (1..8).rev() {
-                                printat(0, (vbottom - vtop + 5 + i) as u16, "                                                                                   ", &mut stdout)?;
-                            }
-                            printat(0, (vbottom - vtop + 6) as u16, "", &mut stdout)?;
+                            clear_input_region(&config, &data, &mut stdout)?;
                             println!("Saved file.");
                             // TODO: implement the rerender after save (remove *) for all/most commands
                             render::render(&mut config, &data, &mut stdout)?;
                         }
                     },
                     "delete" | "d" => {
-                        match command[1].trim() {
+                        match user_command.term(1) {
                             "row" | "r" => {
                                 data.delete_row(data.selected().unwrap_or((0, 0)).0, &config);
                                 // Start control cycle
@@ -261,16 +220,13 @@ fn main() -> io::Result<()> {
                                 control_cycle(&mut config, &mut data, &mut stdout)?;
                             },
                             _ => {
-                                for i in (1..8).rev() {
-                                    printat(0, (vbottom - vtop + 5 + i) as u16, "                                                                                   ", &mut stdout)?;
-                                }
-                                printat(0, (vbottom - vtop + 6) as u16, "", &mut stdout)?;
+                                clear_input_region(&config, &data, &mut stdout)?;
                                 println!("Unknown command.");
                             }
                         }
                     },
                     "insert" | "o" | "i" => {
-                        match command[1].trim() {
+                        match user_command.term(1) {
                             "row" | "r" => {
                                 data.insert_row(data.selected().unwrap_or((0, 0)).0, &config);
                                 // Start control cycle
@@ -282,51 +238,42 @@ fn main() -> io::Result<()> {
                                 control_cycle(&mut config, &mut data, &mut stdout)?;
                             },
                             _ => {
-                                for i in (1..8).rev() {
-                                    printat(0, (vbottom - vtop + 5 + i) as u16, "                                                                                   ", &mut stdout)?;
-                                }
-                                printat(0, (vbottom - vtop + 6) as u16, "", &mut stdout)?;
+                                clear_input_region(&config, &data, &mut stdout)?;
                                 println!("Unknown command.");
                             }
                         }
                     },
                     _ => {
-                        for i in (1..8).rev() {
-                            printat(0, (vbottom - vtop + 5 + i) as u16, "                                                                                   ", &mut stdout)?;
-                        }
-                        printat(0, (vbottom - vtop + 6) as u16, "", &mut stdout)?;
+                        clear_input_region(&config, &data, &mut stdout)?;
                         println!("Unknown command.");
                     }
                 }
             },
             3 => {
-                match command[0].trim() {
+                match user_command.term(0) {
                     "nav" | "g" => {
                         // Navigate to a cell (command[2], command[1])
-                        data.set_selected_coords((command[2].parse().unwrap_or(0), command[1].parse().unwrap_or(0)));
+                        data.set_selected_coords((user_command.term(2).parse().unwrap_or(0), user_command.term(1).parse().unwrap_or(0)));
                         // Start the control cycle
                         control_cycle(&mut config, &mut data, &mut stdout)?;
                     },
                     "config" => {
                         // Set a config to a value
-                        config.set_value(command[1], command[2].parse().unwrap_or(2));
+                        config.set_value(user_command.term(1), user_command.term(2).parse().unwrap_or(2));
                         // Display all the config items
-                        for i in (1..8).rev() {
-                            printat(0, (vbottom - vtop + 5 + i) as u16, "                                                                                   ", &mut stdout)?;
-                        }
-                        printat(0, (vbottom - vtop + 6) as u16, "", &mut stdout)?;
+                        clear_input_region(&config, &data, &mut stdout)?;
                         println!("{}", config.display()); // TODO: CLEAR WHILE PRINTING (ex. prevent historysize: 10 -> 9 show as 90)
                     },
                     "sort" => {
                         // Sort column over region command[1]..=command[2]
-                        data.sort_column_bounded(data.selected().unwrap_or((0, 0)).1, command[1].parse().unwrap_or(0), command[2].parse().unwrap_or(data.bounds().0 - 1), &config);
+                        data.sort_column_bounded(data.selected().unwrap_or((0, 0)).1, user_command.term(1).parse().unwrap_or(0), user_command.term(2).parse().unwrap_or(data.bounds().0 - 1), &config);
                         // Start control cycle
                         control_cycle(&mut config, &mut data, &mut stdout)?;
                     },
                     "insert" | "o" | "i" => {
-                        match command[2].trim() {
+                        match user_command.term(2) {
                             "post" | "p" => {
-                                match command[1].trim() {
+                                match user_command.term(1) {
                                     "row" | "r" => {
                                         data.insert_row(data.selected().unwrap_or((0, 0)).0 + 1, &config);
                                         // Start control cycle
@@ -338,37 +285,25 @@ fn main() -> io::Result<()> {
                                         control_cycle(&mut config, &mut data, &mut stdout)?;
                                     },
                                     _ => {
-                                        for i in (1..8).rev() {
-                                            printat(0, (vbottom - vtop + 5 + i) as u16, "                                                                                   ", &mut stdout)?;
-                                        }
-                                        printat(0, (vbottom - vtop + 6) as u16, "", &mut stdout)?;
+                                        clear_input_region(&config, &data, &mut stdout)?;
                                         println!("Unknown command.");
                                     }
                                 }
                             },
                             _ => {
-                                for i in (1..8).rev() {
-                                    printat(0, (vbottom - vtop + 5 + i) as u16, "                                                                                   ", &mut stdout)?;
-                                }
-                                printat(0, (vbottom - vtop + 6) as u16, "", &mut stdout)?;
+                                clear_input_region(&config, &data, &mut stdout)?;
                                 println!("Unknown command.");
                             }
                         }
                     },
                     _ => {
-                        for i in (1..8).rev() {
-                            printat(0, (vbottom - vtop + 5 + i) as u16, "                                                                                   ", &mut stdout)?;
-                        }
-                        printat(0, (vbottom - vtop + 6) as u16, "", &mut stdout)?;
+                        clear_input_region(&config, &data, &mut stdout)?;
                         println!("Unknown command.");
                     }
                 }
             }
             _ => {
-                for i in (1..8).rev() {
-                    printat(0, (vbottom - vtop + 5 + i) as u16, "                                                                                   ", &mut stdout)?;
-                }
-                printat(0, (vbottom - vtop + 6) as u16, "", &mut stdout)?;
+                clear_input_region(&config, &data, &mut stdout)?;
                 println!("Unknown command.");
             }
         }
@@ -377,9 +312,9 @@ fn main() -> io::Result<()> {
     io::Result::Ok(())
 }
 
-// todo: refactor ?
+// TODO: refactor ?
 /// Utility to print an input word
-fn print_input_word(config: &mut configdata::ConfigData, data: &mut sheetdata::SheetData, stdout: &mut io::Stdout, inputword: &str) -> io::Result<()> {
+fn print_input_word(config: &configdata::ConfigData, data: &sheetdata::SheetData, stdout: &mut io::Stdout, inputword: &str) -> io::Result<()> {
     // TODO: move the whole inputword display feature into render (along with bool for isInputting) ?
     let selectedcoords = data.selected().unwrap_or((0, 0));
     let viewheight: usize = config.get_value("viewcellsheight").unwrap_or(10).try_into().unwrap_or(10);
@@ -388,6 +323,19 @@ fn print_input_word(config: &mut configdata::ConfigData, data: &mut sheetdata::S
     printat(15, (vbottom - vtop + 4) as u16, "                              ", stdout)?;
     printat(15, (vbottom - vtop + 4) as u16, inputword, stdout)?;
     flush(stdout)?;
+    io::Result::Ok(())
+}
+
+/// Utility to clear the input
+fn clear_input_region(config: &configdata::ConfigData, data: &sheetdata::SheetData, stdout: &mut io::Stdout) -> io::Result<()> {
+    let selectedcoords = data.selected().unwrap_or((0, 0));
+    let viewheight: usize = config.get_value("viewcellsheight").unwrap_or(10).try_into().unwrap_or(10);
+    let vtop: usize = cmp::max(selectedcoords.0.saturating_sub(viewheight / 2), 0);
+    let vbottom: usize = cmp::min(vtop + viewheight, data.bounds().0);
+    for i in (1..8).rev() {
+        printat(0, (vbottom - vtop + 5 + i) as u16, "                                                                                   ", stdout)?;
+    }
+                            printat(0, (vbottom - vtop + 6) as u16, "", stdout)?; // TODO: heavy refactoring of this clear section (repeated a lot)
     io::Result::Ok(())
 }
 
@@ -465,7 +413,7 @@ fn control_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::Shee
                 // VIM MODE KEYBINDINGS
                 // TODO: impl all
                 match ink {
-                    crossterm::event::KeyCode::Esc => {
+                    crossterm::event::KeyCode::Esc | crossterm::event::KeyCode::Enter => {
                         if insertmode {
                             // Exit insert mode, saving changes to the cell if needed
                             data.set_selected_cell_value(inputword.clone(), &config);

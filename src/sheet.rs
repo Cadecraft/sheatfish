@@ -10,7 +10,7 @@ impl Sheet {
     /// Create a blank default sheet
     pub fn new() -> Sheet {
         Sheet {
-            sheet: Vec::new(),
+            sheet: vec![vec!["".to_string(); 16]; 16],
             selected: Some((0, 0))
         }
     }
