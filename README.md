@@ -135,7 +135,7 @@ Delete the last character of the new value, or clear the current cell if there i
 
 - `[c]`/`[i]` - Change the value of a cell to the literal value typed immediately after
 
-- `[esc]` - Exit insert mode (go into "normal" mode, committing cell changes)
+- `[esc]`/`[enter]` - Exit insert mode (go into "normal" mode, committing cell changes)
 
 - `[a]` - Append into a cell (add characters at the end)
 
