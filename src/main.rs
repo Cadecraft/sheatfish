@@ -7,7 +7,13 @@ pub mod render;
 pub mod ioutils;
 pub mod command;
 use ioutils::{
-    printat, clear, read_key, set_raw_mode, flush
+    printat,
+    clear,
+    read_key,
+    set_raw_mode,
+    print_input_word,
+    print_command_prompt,
+    print_status_message
 };
 use std::{ cmp, io, env };
 
@@ -53,9 +59,28 @@ fn main() -> io::Result<()> {
     }
 
     // Start the command cycle
+    command_cycle(&mut config, &mut data, &mut stdout)?;
+
+    io::Result::Ok(())
+}
+
+/// Get the vertical coordinate of the first line below the main sheet (the line for inputting cells)
+/// This value, vstart, is used for printing information below the sheet
+fn vertical_coord_of_input(config: &configdata::ConfigData, data: &sheetdata::SheetData) -> u16 {
+    let selectedcoords = data.selected().unwrap_or((0, 0));
+    let viewheight: usize = config.get_value("viewcellsheight").unwrap_or(10).try_into().unwrap_or(10);
+    let vtop: usize = cmp::max(selectedcoords.0.saturating_sub(viewheight / 2), 0);
+    let vbottom: usize = cmp::min(vtop + viewheight, data.bounds().0);
+    const VERTICAL_EXTRA: usize = 4;
+    (vbottom - vtop + VERTICAL_EXTRA) as u16
+}
+
+/// Command cycle
+fn command_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::SheetData, stdout: &mut io::Stdout) -> io::Result<()> {
     loop {
+        let vstart = vertical_coord_of_input(config, data);
         // TODO: better cycle appearance
-        print_command_prompt(&config, &data, &mut stdout)?;
+        print_command_prompt(vstart, stdout)?;
 
         // Raw mode should be disabled for commands
         set_raw_mode(false)?;
@@ -70,7 +95,7 @@ fn main() -> io::Result<()> {
                         // Quit
                         if data.unsaved {
                             // Quit confirmation
-                            print_status_message(&config, &data, &mut stdout, concat!(
+                            print_status_message(vstart, stdout, concat!(
                                 "You have unsaved changes to this file.\n",
                                 "If you want to quit without saving, ",
                                 "use \"quit!\" or \"q!\" instead"
@@ -87,13 +112,13 @@ fn main() -> io::Result<()> {
                     "edit" | "e" => {
                         // Back to editing the file
                         // Start control cycle
-                        control_cycle(&mut config, &mut data, &mut stdout)?;
+                        control_cycle(config, data, stdout)?;
                     },
                     "new" => {
                         // New file: load a blank default vector
                         if data.unsaved {
                             // New confirmation
-                            print_status_message(&config, &data, &mut stdout, concat!(
+                            print_status_message(vstart, stdout, concat!(
                                 "You have unsaved changes to this file.\n",
                                 "If you want to replace it with a new file without saving, ",
                                 "use \"new!\" instead"
@@ -102,14 +127,14 @@ fn main() -> io::Result<()> {
                             // Able to load
                             data.load_vector(&vec![vec!["".to_string(); 16]; 16]);
                             // Start control cycle
-                            control_cycle(&mut config, &mut data, &mut stdout)?;
+                            control_cycle(config, data, stdout)?;
                         }
                     },
                     "new!" => {
                         // New file: load a blank default vector
                         data.load_vector(&vec![vec!["".to_string(); 16]; 16]);
                         // Start control cycle
-                        control_cycle(&mut config, &mut data, &mut stdout)?;
+                        control_cycle(config, data, stdout)?;
                     },
                     "save" | "w" => {
                         // Save the file to the same path, if possible
@@ -117,40 +142,40 @@ fn main() -> io::Result<()> {
                         // TODO: re-render to show updated filename, etc.
                         let save_success = data.save_file(&data.file_path.clone());
                         if !save_success {
-                            print_status_message(&config, &data, &mut stdout, "Error saving file.")?;
+                            print_status_message(vstart, stdout, "Error saving file.")?;
                         } else {
-                            print_status_message(&config, &data, &mut stdout, "Saved file.")?;
-                            render::render(&mut config, &data, &mut stdout)?;
+                            print_status_message(vstart, stdout, "Saved file.")?;
+                            render::render(config, data, stdout)?;
                         }
                     },
                     "path" => {
                         // Display the file path (filename with path as entered)
-                        print_status_message(&config, &data, &mut stdout, &data.file_path)?;
+                        print_status_message(vstart, stdout, &data.file_path)?;
                     },
                     "config" => {
                         // Display all the config items
-                        print_status_message(&config, &data, &mut stdout, &config.display())?;
+                        print_status_message(vstart, stdout, &config.display())?;
                     },
                     "sort" => {
                         // Sort
-                        data.sort_column(data.selected().unwrap_or((0, 0)).1, &config);
+                        data.sort_column(data.selected().unwrap_or((0, 0)).1, config);
                         // Start control cycle
-                        control_cycle(&mut config, &mut data, &mut stdout)?;
+                        control_cycle(config, data, stdout)?;
                     },
                     "undo" | "u" => {
                         // Undo
                         data.undo();
                         // Start control cycle
-                        control_cycle(&mut config, &mut data, &mut stdout)?;
+                        control_cycle(config, data, stdout)?;
                     },
                     "redo" | "r" => {
                         // Redo
                         data.redo();
                         // Start control cycle
-                        control_cycle(&mut config, &mut data, &mut stdout)?;
+                        control_cycle(config, data, stdout)?;
                     },
                     _ => {
-                        print_status_message(&config, &data, &mut stdout, "Unknown command.")?;
+                        print_status_message(vstart, stdout, "Unknown command.")?;
                     }
                 }
             },
@@ -160,7 +185,7 @@ fn main() -> io::Result<()> {
                         // Load the file
                         if data.unsaved {
                             // Load confirmation
-                            print_status_message(&config, &data, &mut stdout, concat!(
+                            print_status_message(vstart, stdout, concat!(
                                 "You have unsaved changes to this file.\n",
                                 "If you want to switch to a new file without saving, ",
                                 "use \"open!\" or \"e!\" instead"
@@ -168,11 +193,11 @@ fn main() -> io::Result<()> {
                         } else {
                             let load_success = data.load_file(user_command.term(1));
                             if !load_success {
-                                print_status_message(&config, &data, &mut stdout, "Error opening file.")?;
+                                print_status_message(vstart, stdout, "Error opening file.")?;
                                 // TODO: handle error better
                             } else {
                                 // Start the control cycle
-                                control_cycle(&mut config, &mut data, &mut stdout)?;
+                                control_cycle(config, data, stdout)?;
                             }
                         }
                     },
@@ -180,59 +205,59 @@ fn main() -> io::Result<()> {
                         // Force load the file
                         let load_success = data.load_file(user_command.term(1));
                         if !load_success {
-                            print_status_message(&config, &data, &mut stdout, "Error opening file.")?;
+                            print_status_message(vstart, stdout, "Error opening file.")?;
                         } else {
                             // Start the control cycle
-                            control_cycle(&mut config, &mut data, &mut stdout)?;
+                            control_cycle(config, data, stdout)?;
                         }
                     },
                     "save" | "w" => {
                         // Save the file
                         let save_success = data.save_file(user_command.term(1));
                         if !save_success {
-                            print_status_message(&config, &data, &mut stdout, "Error saving file.")?;
+                            print_status_message(vstart, stdout, "Error saving file.")?;
                         } else {
-                            print_status_message(&config, &data, &mut stdout, "Saved file.")?;
+                            print_status_message(vstart, stdout, "Saved file.")?;
                             // TODO: implement the rerender after save (remove *) for all/most commands
-                            render::render(&mut config, &data, &mut stdout)?;
+                            render::render(config, data, stdout)?;
                         }
                     },
                     "delete" | "d" => {
                         match user_command.term(1) {
                             "row" | "r" => {
-                                data.delete_row(data.selected().unwrap_or((0, 0)).0, &config);
+                                data.delete_row(data.selected().unwrap_or((0, 0)).0, config);
                                 // Start control cycle
-                                control_cycle(&mut config, &mut data, &mut stdout)?;
+                                control_cycle(config, data, stdout)?;
                             },
                             "column" | "col" | "c" => {
-                                data.delete_column(data.selected().unwrap_or((0, 0)).1, &config);
+                                data.delete_column(data.selected().unwrap_or((0, 0)).1, config);
                                 // Start control cycle
-                                control_cycle(&mut config, &mut data, &mut stdout)?;
+                                control_cycle(config, data, stdout)?;
                             },
                             _ => {
-                                print_status_message(&config, &data, &mut stdout, "Unknown command.")?;
+                                print_status_message(vstart, stdout, "Unknown command.")?;
                             }
                         }
                     },
                     "insert" | "o" | "i" => {
                         match user_command.term(1) {
                             "row" | "r" => {
-                                data.insert_row(data.selected().unwrap_or((0, 0)).0, &config);
+                                data.insert_row(data.selected().unwrap_or((0, 0)).0, config);
                                 // Start control cycle
-                                control_cycle(&mut config, &mut data, &mut stdout)?;
+                                control_cycle(config, data, stdout)?;
                             },
                             "column" | "col" | "c" => {
-                                data.insert_column(data.selected().unwrap_or((0, 0)).1, &config);
+                                data.insert_column(data.selected().unwrap_or((0, 0)).1, config);
                                 // Start control cycle
-                                control_cycle(&mut config, &mut data, &mut stdout)?;
+                                control_cycle(config, data, stdout)?;
                             },
                             _ => {
-                                print_status_message(&config, &data, &mut stdout, "Unknown command.")?;
+                                print_status_message(vstart, stdout, "Unknown command.")?;
                             }
                         }
                     },
                     _ => {
-                        print_status_message(&config, &data, &mut stdout, "Unknown command.")?;
+                        print_status_message(vstart, stdout, "Unknown command.")?;
                     }
                 }
             },
@@ -242,120 +267,63 @@ fn main() -> io::Result<()> {
                         // Navigate to a cell (command[2], command[1])
                         data.set_selected_coords((user_command.term(2).parse().unwrap_or(0), user_command.term(1).parse().unwrap_or(0)));
                         // Start the control cycle
-                        control_cycle(&mut config, &mut data, &mut stdout)?;
+                        control_cycle(config, data, stdout)?;
                     },
                     "config" => {
                         // Set a config to a value
                         config.set_value(user_command.term(1), user_command.term(2).parse().unwrap_or(2));
                         // Display all the config items
-                        print_status_message(&config, &data, &mut stdout, &config.display())?;
+                        print_status_message(vstart, stdout, &config.display())?;
                     },
                     "sort" => {
                         // Sort column over region command[1]..=command[2]
-                        data.sort_column_bounded(data.selected().unwrap_or((0, 0)).1, user_command.term(1).parse().unwrap_or(0), user_command.term(2).parse().unwrap_or(data.bounds().0 - 1), &config);
+                        data.sort_column_bounded(data.selected().unwrap_or((0, 0)).1, user_command.term(1).parse().unwrap_or(0), user_command.term(2).parse().unwrap_or(data.bounds().0 - 1), config);
                         // Start control cycle
-                        control_cycle(&mut config, &mut data, &mut stdout)?;
+                        control_cycle(config, data, stdout)?;
                     },
                     "insert" | "o" | "i" => {
                         match user_command.term(2) {
                             "post" | "p" => {
                                 match user_command.term(1) {
                                     "row" | "r" => {
-                                        data.insert_row(data.selected().unwrap_or((0, 0)).0 + 1, &config);
+                                        data.insert_row(data.selected().unwrap_or((0, 0)).0 + 1, config);
                                         // Start control cycle
-                                        control_cycle(&mut config, &mut data, &mut stdout)?;
+                                        control_cycle(config, data, stdout)?;
                                     },
                                     "column" | "col" | "c" => {
-                                        data.insert_column(data.selected().unwrap_or((0, 0)).1 + 1, &config);
+                                        data.insert_column(data.selected().unwrap_or((0, 0)).1 + 1, config);
                                         // Start control cycle
-                                        control_cycle(&mut config, &mut data, &mut stdout)?;
+                                        control_cycle(config, data, stdout)?;
                                     },
                                     _ => {
-                                        print_status_message(&config, &data, &mut stdout, "Unknown command.")?;
+                                        print_status_message(vstart, stdout, "Unknown command.")?;
                                     }
                                 }
                             },
                             _ => {
-                                print_status_message(&config, &data, &mut stdout, "Unknown command.")?;
+                                print_status_message(vstart, stdout, "Unknown command.")?;
                             }
                         }
                     },
                     _ => {
-                        print_status_message(&config, &data, &mut stdout, "Unknown command.")?;
+                        print_status_message(vstart, stdout, "Unknown command.")?;
                     }
                 }
             }
             _ => {
-                print_status_message(&config, &data, &mut stdout, "Unknown command.")?;
+                print_status_message(vstart, stdout, "Unknown command.")?;
             }
         }
     }
-
     io::Result::Ok(())
 }
-
-/// Get the vertical coordinate of the first line below the main sheet (the input line)
-/// (Used for printing)
-fn vertical_coord_of_input(config: &configdata::ConfigData, data: &sheetdata::SheetData) -> u16 {
-    let selectedcoords = data.selected().unwrap_or((0, 0));
-    let viewheight: usize = config.get_value("viewcellsheight").unwrap_or(10).try_into().unwrap_or(10);
-    let vtop: usize = cmp::max(selectedcoords.0.saturating_sub(viewheight / 2), 0);
-    let vbottom: usize = cmp::min(vtop + viewheight, data.bounds().0);
-    const VERTICAL_EXTRA: usize = 4;
-    (vbottom - vtop + VERTICAL_EXTRA) as u16
-}
-
-// TODO: move the whole inputword display feature into render (along with bool for isInputting)?
-/// Utility to print an input word
-fn print_input_word(config: &configdata::ConfigData, data: &sheetdata::SheetData, stdout: &mut io::Stdout, inputword: &str) -> io::Result<()> {
-    clear_input_region(config, data, stdout)?;
-    let vstart = vertical_coord_of_input(config, data);
-    const LEFT_INPUT_WORD_BOUND: u16 = 15;
-    printat(LEFT_INPUT_WORD_BOUND, vstart, inputword, stdout)?;
-    flush(stdout)?;
-    io::Result::Ok(())
-}
-
-/// Utility to display the command prompt
-fn print_command_prompt(config: &configdata::ConfigData, data: &sheetdata::SheetData, stdout: &mut io::Stdout) -> io::Result<()> {
-    let vstart = vertical_coord_of_input(config, data);
-    const CLEAR_WIDTH: u16 = 83;
-    let clearing_string: &str = &(0..CLEAR_WIDTH).map(|_| " ").collect::<String>();
-    printat(0, vstart + 1, clearing_string, stdout)?;
-    printat(0, vstart + 1, "Enter a command (see README.md for commands): ", stdout)?;
-    flush(stdout)?;
-    io::Result::Ok(())
-}
-
-/// Utility to print a status message
-fn print_status_message(config: &configdata::ConfigData, data: &sheetdata::SheetData, stdout: &mut io::Stdout, msg: &str) -> io::Result<()> {
-    clear_input_region(config, data, stdout)?;
-    let vstart = vertical_coord_of_input(config, data);
-    printat(0, vstart + 2, msg, stdout)?;
-    flush(stdout)?;
-    io::Result::Ok(())
-}
-
-/// Utility to clear the area below the input line
-fn clear_input_region(config: &configdata::ConfigData, data: &sheetdata::SheetData, stdout: &mut io::Stdout) -> io::Result<()> {
-    let vstart = vertical_coord_of_input(config, data);
-    const CLEAR_WIDTH: u16 = 83;
-    const CLEAR_HEIGHT: u16 = 8;
-    let clearing_string: &str = &(0..CLEAR_WIDTH).map(|_| " ").collect::<String>();
-    for i in (1..CLEAR_HEIGHT).rev() {
-        printat(0, vstart + 1 + i, clearing_string, stdout)?;
-    }
-    printat(0, vstart + 2, "", stdout)?;
-    io::Result::Ok(())
-}
-
-/// Command cycle
 
 /// Input cycle function (when in "normal"/non-command mode)
 fn control_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::SheetData, stdout: &mut io::Stdout) -> io::Result<()> {
     loop {
+        let vstart = vertical_coord_of_input(config, data);
         // Render
-        render::render(config, &data, stdout)?;
+        render::render(config, data, stdout)?;
 
         // Input loop until a rerender
         let mut inputword: String = String::new();
@@ -402,7 +370,7 @@ fn control_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::Shee
                                 } else {
                                     // Not empty: start editing
                                     inputword = cellval.to_string();
-                                    print_input_word(config, data, stdout, &inputword)?;
+                                    print_input_word(vstart, stdout, &inputword)?;
                                     endinput = false;
                                 }
                             } else {
@@ -413,7 +381,7 @@ fn control_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::Shee
                     crossterm::event::KeyCode::Char(c) => {
                         // Char c has been typed
                         inputword.push(c);
-                        print_input_word(config, data, stdout, &inputword)?;
+                        print_input_word(vstart, stdout, &inputword)?;
                         endinput = false;
                     }
                     _ => {
@@ -439,7 +407,7 @@ fn control_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::Shee
                         if insertmode {
                             // Insert this character
                             inputword.push(c);
-                            print_input_word(config, data, stdout, &inputword)?;
+                            print_input_word(vstart, stdout, &inputword)?;
                             endinput = false;
                         } else {
                             let real_repeat_times = cmp::max(1, repeat_times as isize);
@@ -464,7 +432,7 @@ fn control_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::Shee
                                     if let Some(cellval) = data.selected_cell_value() {
                                         // Exists: start editing
                                         inputword = cellval.to_string();
-                                        print_input_word(config, data, stdout, &inputword)?;
+                                        print_input_word(vstart, stdout, &inputword)?;
                                         endinput = false;
                                         insertmode = true;
                                     } else {
@@ -512,7 +480,7 @@ fn control_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::Shee
                                     if data.selected_cell_value().is_some() {
                                         // Exists: start editing
                                         inputword.clear();
-                                        print_input_word(config, data, stdout, &inputword)?;
+                                        print_input_word(vstart, stdout, &inputword)?;
                                         endinput = false;
                                         insertmode = true;
                                     }
@@ -554,6 +522,5 @@ fn control_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::Shee
         }
     }
 
-    // Finished successfully
-    //io::Result::Ok(())
+    // Code after the above is unreachable, so no need to return here
 }
