@@ -307,18 +307,17 @@ fn vertical_coord_of_input(config: &configdata::ConfigData, data: &sheetdata::Sh
     let viewheight: usize = config.get_value("viewcellsheight").unwrap_or(10).try_into().unwrap_or(10);
     let vtop: usize = cmp::max(selectedcoords.0.saturating_sub(viewheight / 2), 0);
     let vbottom: usize = cmp::min(vtop + viewheight, data.bounds().0);
-    // TODO: magic number 4
-    (vbottom - vtop + 4) as u16
+    const VERTICAL_EXTRA: usize = 4;
+    (vbottom - vtop + VERTICAL_EXTRA) as u16
 }
 
-// TODO: refactor ?
+// TODO: move the whole inputword display feature into render (along with bool for isInputting)?
 /// Utility to print an input word
 fn print_input_word(config: &configdata::ConfigData, data: &sheetdata::SheetData, stdout: &mut io::Stdout, inputword: &str) -> io::Result<()> {
-    // TODO: move the whole inputword display feature into render (along with bool for isInputting) ?
+    clear_input_region(config, data, stdout)?;
     let vstart = vertical_coord_of_input(config, data);
-    // TODO: magic number 15
-    printat(15, vstart, "                              ", stdout)?;
-    printat(15, vstart, inputword, stdout)?;
+    const LEFT_INPUT_WORD_BOUND: u16 = 15;
+    printat(LEFT_INPUT_WORD_BOUND, vstart, inputword, stdout)?;
     flush(stdout)?;
     io::Result::Ok(())
 }
@@ -329,17 +328,16 @@ fn print_status_message(config: &configdata::ConfigData, data: &sheetdata::Sheet
     let vstart = vertical_coord_of_input(config, data);
     printat(0, vstart + 2, msg, stdout)?;
     flush(stdout)?;
-    //println!("{}", msg);
     io::Result::Ok(())
 }
 
 /// Utility to clear the area below the input line
 fn clear_input_region(config: &configdata::ConfigData, data: &sheetdata::SheetData, stdout: &mut io::Stdout) -> io::Result<()> {
     let vstart = vertical_coord_of_input(config, data);
-    // TODO: magic number 83, 8
-    let clearingstring = &(0..83).map(|_| " ").collect::<String>();
-    for i in (1..8).rev() {
-        // TODO: more refactoring of this clear section?
+    const CLEAR_WIDTH: u16 = 83;
+    const CLEAR_HEIGHT: u16 = 8;
+    let clearingstring = &(0..CLEAR_WIDTH).map(|_| " ").collect::<String>();
+    for i in (1..CLEAR_HEIGHT).rev() {
         printat(0, vstart + 1 + i, clearingstring, stdout)?;
     }
     printat(0, vstart + 2, "", stdout)?;
@@ -360,7 +358,7 @@ fn control_cycle(config: &mut configdata::ConfigData, data: &mut sheetdata::Shee
         loop {
             let mut endinput: bool = true;
             // Get and take action on input
-            let ink = read_key(); // Read from Crossterm
+            let ink = read_key();
             if config.get_value("vimmode").unwrap_or(0) == 0 {
                 // NORMAL MODE KEYBINDS
                 match ink {

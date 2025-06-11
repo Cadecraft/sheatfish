@@ -17,7 +17,7 @@ pub fn _read_char() -> char {
     '!'
 }
 
-/// Wait for and read an inputted key code
+/// Wait for and read an inputted key code from crossterm
 pub fn read_key() -> crossterm::event::KeyCode {
     // Read the event
     match crossterm::event::read() {
