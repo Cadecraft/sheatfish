@@ -66,7 +66,6 @@ fn main() -> io::Result<()> {
         flush(&mut stdout)?;
 
         set_raw_mode(false)?;
-        // TODO: refactor: command class
         let mut uin = String::new();
         std::io::stdin().read_line(&mut uin).expect("Failed to read line");
         let user_command = command::Command::from(&uin);
@@ -77,9 +76,11 @@ fn main() -> io::Result<()> {
                         // Quit
                         if data.unsaved {
                             // Quit confirmation
-                            clear_input_region(&config, &data, &mut stdout)?;
-                            println!("You have unsaved changes to this file.");
-                            println!("If you want to quit without saving, use \"quit!\" or \"q!\" instead");
+                            print_status_message(&config, &data, &mut stdout, concat!(
+                                "You have unsaved changes to this file.\n",
+                                "If you want to quit without saving, ",
+                                "use \"quit!\" or \"q!\" instead"
+                            ))?;
                         } else {
                             // Able to quit
                             break;
@@ -98,9 +99,11 @@ fn main() -> io::Result<()> {
                         // New file: load a blank default vector
                         if data.unsaved {
                             // New confirmation
-                            clear_input_region(&config, &data, &mut stdout)?;
-                            println!("You have unsaved changes to this file.");
-                            println!("If you want to replace it with a new file without saving, use \"new!\" instead");
+                            print_status_message(&config, &data, &mut stdout, concat!(
+                                "You have unsaved changes to this file.\n",
+                                "If you want to replace it with a new file without saving, ",
+                                "use \"new!\" instead"
+                            ))?;
                         } else {
                             // Able to load
                             data.load_vector(&vec![vec!["".to_string(); 16]; 16]);
@@ -120,23 +123,19 @@ fn main() -> io::Result<()> {
                         // TODO: re-render to show updated filename, etc.
                         let save_success = data.save_file(&data.file_path.clone());
                         if !save_success {
-                            clear_input_region(&config, &data, &mut stdout)?;
-                            println!("Error saving file.");
+                            print_status_message(&config, &data, &mut stdout, "Error saving file.")?;
                         } else {
-                            clear_input_region(&config, &data, &mut stdout)?;
-                            println!("Saved file.");
+                            print_status_message(&config, &data, &mut stdout, "Saved file.")?;
                             render::render(&mut config, &data, &mut stdout)?;
                         }
                     },
                     "path" => {
                         // Display the file path (filename with path as entered)
-                        printat(0, (vbottom - vtop + 6) as u16, "", &mut stdout)?;
-                        println!("{}", data.file_path);
+                        print_status_message(&config, &data, &mut stdout, &data.file_path)?;
                     },
                     "config" => {
                         // Display all the config items
-                        clear_input_region(&config, &data, &mut stdout)?;
-                        println!("{}", config.display());
+                        print_status_message(&config, &data, &mut stdout, &config.display())?;
                     },
                     "sort" => {
                         // Sort
@@ -157,8 +156,7 @@ fn main() -> io::Result<()> {
                         control_cycle(&mut config, &mut data, &mut stdout)?;
                     },
                     _ => {
-                        clear_input_region(&config, &data, &mut stdout)?;
-                        println!("Unknown command."); // TODO: refactor unknown ?
+                        print_status_message(&config, &data, &mut stdout, "Unknown command.")?;
                     }
                 }
             },
@@ -168,14 +166,15 @@ fn main() -> io::Result<()> {
                         // Load the file
                         if data.unsaved {
                             // Load confirmation
-                            clear_input_region(&config, &data, &mut stdout)?;
-                            println!("You have unsaved changes to this file.");
-                            println!("If you want to switch to a new file without saving, use \"open!\" or \"e!\" instead");
+                            print_status_message(&config, &data, &mut stdout, concat!(
+                                "You have unsaved changes to this file.\n",
+                                "If you want to switch to a new file without saving, ",
+                                "use \"open!\" or \"e!\" instead"
+                            ))?;
                         } else {
                             let load_success = data.load_file(user_command.term(1));
                             if !load_success {
-                                clear_input_region(&config, &data, &mut stdout)?;
-                                println!("Error opening file.");
+                                print_status_message(&config, &data, &mut stdout, "Error opening file.")?;
                                 // TODO: handle error better
                             } else {
                                 // Start the control cycle
@@ -187,8 +186,7 @@ fn main() -> io::Result<()> {
                         // Force load the file
                         let load_success = data.load_file(user_command.term(1));
                         if !load_success {
-                            clear_input_region(&config, &data, &mut stdout)?;
-                            println!("Error opening file.");
+                            print_status_message(&config, &data, &mut stdout, "Error opening file.")?;
                         } else {
                             // Start the control cycle
                             control_cycle(&mut config, &mut data, &mut stdout)?;
@@ -198,11 +196,9 @@ fn main() -> io::Result<()> {
                         // Save the file
                         let save_success = data.save_file(user_command.term(1));
                         if !save_success {
-                            clear_input_region(&config, &data, &mut stdout)?;
-                            println!("Error saving file.");
+                            print_status_message(&config, &data, &mut stdout, "Error saving file.")?;
                         } else {
-                            clear_input_region(&config, &data, &mut stdout)?;
-                            println!("Saved file.");
+                            print_status_message(&config, &data, &mut stdout, "Saved file.")?;
                             // TODO: implement the rerender after save (remove *) for all/most commands
                             render::render(&mut config, &data, &mut stdout)?;
                         }
@@ -220,8 +216,7 @@ fn main() -> io::Result<()> {
                                 control_cycle(&mut config, &mut data, &mut stdout)?;
                             },
                             _ => {
-                                clear_input_region(&config, &data, &mut stdout)?;
-                                println!("Unknown command.");
+                                print_status_message(&config, &data, &mut stdout, "Unknown command.")?;
                             }
                         }
                     },
@@ -238,14 +233,12 @@ fn main() -> io::Result<()> {
                                 control_cycle(&mut config, &mut data, &mut stdout)?;
                             },
                             _ => {
-                                clear_input_region(&config, &data, &mut stdout)?;
-                                println!("Unknown command.");
+                                print_status_message(&config, &data, &mut stdout, "Unknown command.")?;
                             }
                         }
                     },
                     _ => {
-                        clear_input_region(&config, &data, &mut stdout)?;
-                        println!("Unknown command.");
+                        print_status_message(&config, &data, &mut stdout, "Unknown command.")?;
                     }
                 }
             },
@@ -261,8 +254,7 @@ fn main() -> io::Result<()> {
                         // Set a config to a value
                         config.set_value(user_command.term(1), user_command.term(2).parse().unwrap_or(2));
                         // Display all the config items
-                        clear_input_region(&config, &data, &mut stdout)?;
-                        println!("{}", config.display()); // TODO: CLEAR WHILE PRINTING (ex. prevent historysize: 10 -> 9 show as 90)
+                        print_status_message(&config, &data, &mut stdout, &config.display())?;
                     },
                     "sort" => {
                         // Sort column over region command[1]..=command[2]
@@ -285,26 +277,22 @@ fn main() -> io::Result<()> {
                                         control_cycle(&mut config, &mut data, &mut stdout)?;
                                     },
                                     _ => {
-                                        clear_input_region(&config, &data, &mut stdout)?;
-                                        println!("Unknown command.");
+                                        print_status_message(&config, &data, &mut stdout, "Unknown command.")?;
                                     }
                                 }
                             },
                             _ => {
-                                clear_input_region(&config, &data, &mut stdout)?;
-                                println!("Unknown command.");
+                                print_status_message(&config, &data, &mut stdout, "Unknown command.")?;
                             }
                         }
                     },
                     _ => {
-                        clear_input_region(&config, &data, &mut stdout)?;
-                        println!("Unknown command.");
+                        print_status_message(&config, &data, &mut stdout, "Unknown command.")?;
                     }
                 }
             }
             _ => {
-                clear_input_region(&config, &data, &mut stdout)?;
-                println!("Unknown command.");
+                print_status_message(&config, &data, &mut stdout, "Unknown command.")?;
             }
         }
     }
@@ -312,30 +300,49 @@ fn main() -> io::Result<()> {
     io::Result::Ok(())
 }
 
+/// Get the vertical coordinate of the first line below the main sheet (the input line)
+/// (Used for printing)
+fn vertical_coord_of_input(config: &configdata::ConfigData, data: &sheetdata::SheetData) -> u16 {
+    let selectedcoords = data.selected().unwrap_or((0, 0));
+    let viewheight: usize = config.get_value("viewcellsheight").unwrap_or(10).try_into().unwrap_or(10);
+    let vtop: usize = cmp::max(selectedcoords.0.saturating_sub(viewheight / 2), 0);
+    let vbottom: usize = cmp::min(vtop + viewheight, data.bounds().0);
+    // TODO: magic number 4
+    (vbottom - vtop + 4) as u16
+}
+
 // TODO: refactor ?
 /// Utility to print an input word
 fn print_input_word(config: &configdata::ConfigData, data: &sheetdata::SheetData, stdout: &mut io::Stdout, inputword: &str) -> io::Result<()> {
     // TODO: move the whole inputword display feature into render (along with bool for isInputting) ?
-    let selectedcoords = data.selected().unwrap_or((0, 0));
-    let viewheight: usize = config.get_value("viewcellsheight").unwrap_or(10).try_into().unwrap_or(10);
-    let vtop: usize = cmp::max(selectedcoords.0.saturating_sub(viewheight / 2), 0);
-    let vbottom: usize = cmp::min(vtop + viewheight, data.bounds().0);
-    printat(15, (vbottom - vtop + 4) as u16, "                              ", stdout)?;
-    printat(15, (vbottom - vtop + 4) as u16, inputword, stdout)?;
+    let vstart = vertical_coord_of_input(config, data);
+    // TODO: magic number 15
+    printat(15, vstart, "                              ", stdout)?;
+    printat(15, vstart, inputword, stdout)?;
     flush(stdout)?;
     io::Result::Ok(())
 }
 
-/// Utility to clear the input
+/// Utility to print a status message
+fn print_status_message(config: &configdata::ConfigData, data: &sheetdata::SheetData, stdout: &mut io::Stdout, msg: &str) -> io::Result<()> {
+    clear_input_region(config, data, stdout)?;
+    let vstart = vertical_coord_of_input(config, data);
+    printat(0, vstart + 2, msg, stdout)?;
+    flush(stdout)?;
+    //println!("{}", msg);
+    io::Result::Ok(())
+}
+
+/// Utility to clear the area below the input line
 fn clear_input_region(config: &configdata::ConfigData, data: &sheetdata::SheetData, stdout: &mut io::Stdout) -> io::Result<()> {
-    let selectedcoords = data.selected().unwrap_or((0, 0));
-    let viewheight: usize = config.get_value("viewcellsheight").unwrap_or(10).try_into().unwrap_or(10);
-    let vtop: usize = cmp::max(selectedcoords.0.saturating_sub(viewheight / 2), 0);
-    let vbottom: usize = cmp::min(vtop + viewheight, data.bounds().0);
+    let vstart = vertical_coord_of_input(config, data);
+    // TODO: magic number 83, 8
+    let clearingstring = &(0..83).map(|_| " ").collect::<String>();
     for i in (1..8).rev() {
-        printat(0, (vbottom - vtop + 5 + i) as u16, "                                                                                   ", stdout)?;
+        // TODO: more refactoring of this clear section?
+        printat(0, vstart + 1 + i, clearingstring, stdout)?;
     }
-                            printat(0, (vbottom - vtop + 6) as u16, "", stdout)?; // TODO: heavy refactoring of this clear section (repeated a lot)
+    printat(0, vstart + 2, "", stdout)?;
     io::Result::Ok(())
 }
 
