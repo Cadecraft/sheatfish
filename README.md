@@ -8,25 +8,7 @@ Features:
 - Two keybind modes: Simple and Vim
 - Easy to configure
 
-UI example "screenshot":
-
-```
-demo_file.csv (10 x 9)
-----
-        0      1      2      3      4      5      6      7      8
- 0      X-VAL  Y-VAL  Z-VAL
- 1      0      0      0
- 2      1      1      0
- 3     [2    ] 4      0
- 4      3      9      0
- 5      4      16     0
- 6
- 7
- 8
- 9
-----
-(3, 0): 2
-```
+![A demo of Sheatfish](./images/SheatfishDemo.gif)
 
 ## Installation
 
@@ -189,4 +171,26 @@ Set to 1 to use the Vim Mode keybinds (see above) (integer from 0..=1, default 0
 - `historysize` -
 Max number of prior states stored for the undo history (integer from 0.., default 100)
 
-<!-- TODO: config option to save files without trailing commas>
+<!-- TODO: config option to save files without trailing commas -->
+
+## Example
+
+UI example "screenshot":
+
+```
+demo_file.csv (10 x 9)
+----
+        0      1      2      3      4      5      6      7      8
+ 0      X-VAL  Y-VAL  Z-VAL
+ 1      0      0      0
+ 2      1      1      0
+ 3     [2    ] 4      0
+ 4      3      9      0
+ 5      4      16     0
+ 6
+ 7
+ 8
+ 9
+----
+(3, 0): 2
+```
