@@ -2,13 +2,13 @@
 
 An incredibly lightweight, productive terminal-based spreadsheet/csv editor written in Rust!
 
+![A demo of Sheatfish](./images/SheatfishDemo.gif)
+
 Features:
 
 - Easily open, edit, and save .csv files in your terminal
 - Two keybind modes: Simple and Vim
 - Easy to configure
-
-![A demo of Sheatfish](./images/SheatfishDemo.gif)
 
 ## Installation
 
